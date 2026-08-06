@@ -48,7 +48,7 @@ const REGISTRY = args['--registry'] || process.env.FORK_REGISTRY
 const VERSION = process.env.FORK_VERSION
 
 if (!VERSION) {
-  console.error(red(`Missing FORK_VERSION env var (e.g. 7.8.0-postgis.0)`))
+  console.error(red(`Missing FORK_VERSION env var (e.g. 7.8.0)`))
   process.exit(1)
 }
 

@@ -86,7 +86,7 @@ qua env var để dùng scope khác (ví dụ `FORK_SCOPE=@acme`).
 ### Cách nhanh nhất — 1 lệnh end-to-end (full fork: JS + WASM + native)
 
 ```bash
-FORK_VERSION=7.8.0-postgis.0 pnpm fork:release
+FORK_VERSION=7.8.0 pnpm fork:release
 ```
 
 Pipeline (theo đúng thứ tự):
@@ -107,7 +107,7 @@ Pipeline (theo đúng thứ tự):
 ### Dry-run (an toàn — không động vào npm/Docker/GitHub)
 
 ```bash
-FORK_VERSION=7.8.0-postgis.0 pnpm fork:release:dry
+FORK_VERSION=7.8.0 pnpm fork:release:dry
 ```
 
 Mọi `npm publish`, `docker build`, `docker run`, `gh release upload` đều
@@ -116,7 +116,7 @@ Mọi `npm publish`, `docker build`, `docker run`, `gh release upload` đều
 ### Chỉ JS layer (không fork engines, dùng CDN Prisma upstream)
 
 ```bash
-FORK_VERSION=7.8.0-postgis.0 pnpm fork:release:js-only
+FORK_VERSION=7.8.0 pnpm fork:release:js-only
 ```
 
 Bỏ qua bước build/upload engines + WASM publish. User cài fork sẽ tải Rust
@@ -130,19 +130,19 @@ binaries từ `binaries.prisma.sh` của Prisma upstream (lưu ý: muốn vậy 
 pnpm install
 
 # 1. Pre-build source patches (fetch-engine URL + engines-version stub)
-FORK_VERSION=7.8.0-postgis.0 pnpm fork:patch-source
+FORK_VERSION=7.8.0 pnpm fork:patch-source
 
 # 2. Build JS bundles (turbo) với patches đã apply
 pnpm fork:build
 
 # 3. Post-build rebrand (rename package.json + rewrite bundle output)
-FORK_VERSION=7.8.0-postgis.0 pnpm fork:rebrand
+FORK_VERSION=7.8.0 pnpm fork:rebrand
 
 # 4. Build + upload Rust engines (~30-60 phút lần đầu)
-FORK_VERSION=7.8.0-postgis.0 pnpm fork:engines:build:wasm
-FORK_VERSION=7.8.0-postgis.0 pnpm fork:engines:build:native
-FORK_VERSION=7.8.0-postgis.0 pnpm fork:engines:upload
-FORK_VERSION=7.8.0-postgis.0 pnpm fork:engines:publish:wasm
+FORK_VERSION=7.8.0 pnpm fork:engines:build:wasm
+FORK_VERSION=7.8.0 pnpm fork:engines:build:native
+FORK_VERSION=7.8.0 pnpm fork:engines:upload
+FORK_VERSION=7.8.0 pnpm fork:engines:publish:wasm
 
 # 5. Verify trước khi đẩy JS lên npm
 pnpm fork:publish:dry
@@ -157,7 +157,7 @@ pnpm fork:restore
 ### Publish chỉ 1 package (debug nhanh)
 
 ```bash
-FORK_VERSION=7.8.0-postgis.0 pnpm fork:rebrand
+FORK_VERSION=7.8.0 pnpm fork:rebrand
 FORK_ONLY=prisma-debug pnpm fork:publish:dry
 ```
 
@@ -168,7 +168,7 @@ FORK_ONLY=prisma-debug pnpm fork:publish:dry
 pnpm fork:engines:build:native --only darwin-arm64
 
 # WASM: chỉ schema-engine-wasm
-FORK_VERSION=7.8.0-postgis.0 pnpm fork:engines:build:wasm --only prisma-schema-engine-wasm
+FORK_VERSION=7.8.0 pnpm fork:engines:build:wasm --only prisma-schema-engine-wasm
 ```
 
 ## Tham số cấu hình (env / flags)
@@ -243,7 +243,7 @@ client → cli`.
 - `npm publish` báo `403 Forbidden`: kiểm tra `npm whoami`, đảm bảo scope
   `@vertex` thuộc account của bạn (hoặc tổ chức bạn có quyền).
 - `npm publish` báo `cannot publish over previously published version`:
-  bump `FORK_VERSION` (ví dụ `7.8.0-postgis.1`).
+  bump `FORK_VERSION` (ví dụ `7.8.1`).
 - Engine không tải được khi user cài fork: kiểm tra rằng `@prisma/engines-version`
   trong `packages/engines/package.json` của fork vẫn trỏ tới một version
   hợp lệ trên npm — đây là source-of-truth cho URL Rust binaries.

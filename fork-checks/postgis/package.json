@@ -16,15 +16,15 @@
     "all": "pnpm setup && pnpm check"
   },
   "dependencies": {
-    "@vertex/prisma-client": "7.8.0-postgis.0",
-    "@vertex/prisma-adapter-pg": "7.8.0-postgis.0",
-    "@vertex/prisma-driver-adapter-utils": "7.8.0-postgis.0",
+    "@vertex/prisma-client": "7.8.0",
+    "@vertex/prisma-adapter-pg": "7.8.0",
+    "@vertex/prisma-driver-adapter-utils": "7.8.0",
     "dotenv": "^16.4.7",
     "pg": "^8.16.3"
   },
   "devDependencies": {
-    "@vertex/prisma": "7.8.0-postgis.0",
-    "@vertex/prisma-config": "7.8.0-postgis.0",
+    "@vertex/prisma": "7.8.0",
+    "@vertex/prisma-config": "7.8.0",
     "@types/node": "^22.10.0",
     "@types/pg": "^8.16.0",
     "tsx": "^4.19.2",
@@ -32,7 +32,7 @@
   },
   "pnpm": {
     "overrides": {
-      "@prisma/debug": "npm:@vertex/prisma-debug@7.8.0-postgis.0"
+      "@prisma/debug": "npm:@vertex/prisma-debug@7.8.0"
     },
     "onlyBuiltDependencies": [
       "@vertex/prisma",

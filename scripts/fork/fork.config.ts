@@ -7,7 +7,7 @@
  *
  * Override at runtime via env vars (or CLI flags on each script):
  *   FORK_SCOPE              e.g. "@vertex" (default)
- *   FORK_VERSION            e.g. "7.8.0-postgis.0" (REQUIRED)
+ *   FORK_VERSION            e.g. "7.8.0" (REQUIRED)
  *   FORK_TAG                e.g. "latest" | "next" | "fork" (default "latest")
  *   FORK_DRY_RUN            "true" to skip the actual publish/upload step
  *   FORK_GH_REPO            e.g. "lh0x00/prisma" (default)

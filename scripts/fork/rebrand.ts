@@ -64,7 +64,7 @@ if (!VERSION) {
   process.exit(1)
 }
 if (!/^\d+\.\d+\.\d+(?:-[\w.+-]+)?$/.test(VERSION)) {
-  console.error(red(`Invalid semver "${VERSION}". Expected e.g. 7.8.0-postgis.0`))
+  console.error(red(`Invalid semver "${VERSION}". Expected e.g. 7.8.0`))
   process.exit(1)
 }
 

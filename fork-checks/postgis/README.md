@@ -31,11 +31,11 @@ which ship the runtime bits that auto-detect PostGIS OIDs
 `package.json` pulls them straight from npm:
 
 ```jsonc
-"@vertex/prisma-adapter-pg": "7.8.0-postgis.0",
-"@vertex/prisma-driver-adapter-utils": "7.8.0-postgis.0",
+"@vertex/prisma-adapter-pg": "7.8.0",
+"@vertex/prisma-driver-adapter-utils": "7.8.0",
 "pnpm": {
   "overrides": {
-    "@prisma/debug": "npm:@vertex/prisma-debug@7.8.0-postgis.0"
+    "@prisma/debug": "npm:@vertex/prisma-debug@7.8.0"
   }
 }
 ```
