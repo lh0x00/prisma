@@ -33,6 +33,10 @@ RUN apk add --no-cache \
 ENV OPENSSL_STATIC=1
 ENV OPENSSL_LIB_DIR=/usr/lib
 ENV OPENSSL_INCLUDE_DIR=/usr/include
+# Force libz-sys to compile zlib from source — the musl self-contained
+# sysroot doesn't expose the system libz.a to the linker, so `-lz` fails
+# even with zlib-dev installed.
+ENV LIBZ_SYS_STATIC=1
 
 WORKDIR /src
 
