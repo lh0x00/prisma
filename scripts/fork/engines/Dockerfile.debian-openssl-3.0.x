@@ -3,12 +3,12 @@
 #
 # Usage (from repo root):
 #   docker build -f scripts/fork/engines/Dockerfile.debian-openssl-3.0.x \
-#     -t vertex/prisma-builder:debian-3.0.x scripts/fork/engines
+#     -t vertexdb/prisma-builder:debian-3.0.x scripts/fork/engines
 #   docker run --rm \
 #     -v "$PWD/prisma-engines:/src" \
 #     -v "$PWD/dist-engines:/out" \
 #     -v "${HOME}/.cargo/registry:/root/.cargo/registry" \
-#     vertex/prisma-builder:debian-3.0.x
+#     vertexdb/prisma-builder:debian-3.0.x
 #
 # `scripts/fork/engines/build-native.ts` automates these calls.
 

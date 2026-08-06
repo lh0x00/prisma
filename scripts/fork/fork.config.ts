@@ -2,11 +2,11 @@
  * Fork publishing config
  * --------------------------------------------------------------
  * Controls how the upstream Prisma packages + Rust engines are renamed
- * and republished under your own npm scope (e.g. `@vertex/*`) and
+ * and republished under your own npm scope (e.g. `@vertexdb/*`) and
  * GitHub Release host (e.g. `lh0x00/prisma`).
  *
  * Override at runtime via env vars (or CLI flags on each script):
- *   FORK_SCOPE              e.g. "@vertex" (default)
+ *   FORK_SCOPE              e.g. "@vertexdb" (default)
  *   FORK_VERSION            e.g. "7.8.0" (REQUIRED)
  *   FORK_TAG                e.g. "latest" | "next" | "fork" (default "latest")
  *   FORK_DRY_RUN            "true" to skip the actual publish/upload step
@@ -15,7 +15,7 @@
  *   FORK_ENGINES_COMMIT     override the commit hash baked into engines-version
  */
 
-export const FORK_SCOPE = process.env.FORK_SCOPE ?? '@vertex'
+export const FORK_SCOPE = process.env.FORK_SCOPE ?? '@vertexdb'
 export const FORK_GH_REPO = process.env.FORK_GH_REPO ?? 'lh0x00/prisma'
 
 /**

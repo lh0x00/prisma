@@ -8,7 +8,7 @@
 #
 # Usage (driven by `scripts/fork/engines/build-wasm.ts`):
 #   docker build -f scripts/fork/engines/Dockerfile.wasm-builder \
-#     -t vertex/prisma-builder:wasm scripts/fork/engines
+#     -t vertexdb/prisma-builder:wasm scripts/fork/engines
 #
 #   docker run --rm \
 #     -e WASM_BUILD_PROFILE=release \
@@ -17,7 +17,7 @@
 #     -e SCHEMA_WASM_VERSION=$FORK_VERSION \
 #     -v "$PWD/prisma-engines:/src" \
 #     -v "${HOME}/.cargo/registry:/root/.cargo/registry" \
-#     vertex/prisma-builder:wasm \
+#     vertexdb/prisma-builder:wasm \
 #     make -C /src build-se-wasm build-qc-wasm build-schema-wasm
 
 FROM rust:1.86-bookworm

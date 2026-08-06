@@ -132,7 +132,7 @@ async function readWasmBindgenVersion(): Promise<string> {
 }
 
 async function buildDocker() {
-  const tag = 'vertex/prisma-builder:wasm'
+  const tag = 'vertexdb/prisma-builder:wasm'
   const noCache = args['--no-cache'] ? ' --no-cache' : ''
   const wasmBindgenVersion = await readWasmBindgenVersion()
   console.log(`  wasm-bindgen ${cyan(wasmBindgenVersion)} ${dim('(from prisma-engines/Cargo.lock)')}`)

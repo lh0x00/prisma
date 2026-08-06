@@ -2,7 +2,7 @@
 
 Workspace stub that becomes `@<your-scope>/prisma-engines-version` after
 `scripts/fork/rebrand.ts` runs. It mirrors the contract of upstream
-`@vertex/prisma-engines-version`: a single `enginesVersion` export read from
+`@vertexdb/prisma-engines-version`: a single `enginesVersion` export read from
 `package.json#prisma.enginesVersion`.
 
 The forked publish pipeline:
@@ -14,5 +14,5 @@ The forked publish pipeline:
 3. `npm publish --access public` from this directory.
 
 Do **not** depend on this package directly; depend on
-`@vertex/prisma-engines-version` upstream and let the rebrand script rewrite the
+`@vertexdb/prisma-engines-version` upstream and let the rebrand script rewrite the
 dep at publish time.

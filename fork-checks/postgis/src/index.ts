@@ -1,5 +1,5 @@
 /**
- * Smoke test for the @vertex/prisma-client fork's PostGIS / Geometry features.
+ * Smoke test for the @vertexdb/prisma-client fork's PostGIS / Geometry features.
  *
  * What this exercises (each block prints PASS/FAIL with a tiny detail):
  *   - Round-trip serialization for Point / LineString / Polygon (GeoJSON ↔ EWKB).
@@ -14,12 +14,12 @@
  *   - `$queryRaw` returning a `Prisma.Geometry` typed column directly.
  *
  * Connection: reads `POSTGIS_URL` from .env (matches `prisma.config.ts`).
- * Adapter: `@vertex/prisma-adapter-pg` – needed for the geometry OID
+ * Adapter: `@vertexdb/prisma-adapter-pg` – needed for the geometry OID
  *   detection that turns server bytes into the typed GeoJSON object exposed to JS.
  */
 
 import 'dotenv/config'
-import { PrismaPg } from '@vertex/prisma-adapter-pg'
+import { PrismaPg } from '@vertexdb/prisma-adapter-pg'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 import { Prisma, PrismaClient } from '../generated/prisma/client'
 

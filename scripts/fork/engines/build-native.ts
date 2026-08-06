@@ -107,7 +107,7 @@ async function buildHost(target: { slug: string; rustTarget: string }) {
 
 async function buildDocker(target: EngineTarget) {
   const dockerfile = path.join(dockerCtx, `Dockerfile.${target.slug}`)
-  const tag = `vertex/prisma-builder:${target.slug}`
+  const tag = `vertexdb/prisma-builder:${target.slug}`
   const noCache = args['--no-cache'] ? ' --no-cache' : ''
   // `--platform` must be passed identically to both `build` and `run` so the
   // image is pulled/built for the desired arch and the runtime container
