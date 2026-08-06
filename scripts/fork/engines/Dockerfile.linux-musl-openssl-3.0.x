@@ -3,12 +3,12 @@
 #
 # Usage (from repo root):
 #   docker build -f scripts/fork/engines/Dockerfile.linux-musl-openssl-3.0.x \
-#     -t vertexdb/prisma-builder:musl-3.0.x scripts/fork/engines
+#     -t vertexa/prisma-builder:musl-3.0.x scripts/fork/engines
 #   docker run --rm \
 #     -v "$PWD/prisma-engines:/src" \
 #     -v "$PWD/dist-engines:/out" \
 #     -v "${HOME}/.cargo/registry:/root/.cargo/registry" \
-#     vertexdb/prisma-builder:musl-3.0.x
+#     vertexa/prisma-builder:musl-3.0.x
 
 FROM rust:1.86-alpine3.20
 

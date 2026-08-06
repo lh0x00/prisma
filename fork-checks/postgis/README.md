@@ -1,6 +1,6 @@
-# `@vertexdb/prisma` PostGIS smoke test
+# `@vertexa/prisma` PostGIS smoke test
 
-Tiny standalone project to verify the **published** `@vertexdb/*@7.8.0` fork
+Tiny standalone project to verify the **published** `@vertexa/*@7.8.0` fork
 exposes the new geometry/PostGIS surface end-to-end against a real Postgres
 + PostGIS instance.
 
@@ -24,18 +24,18 @@ first) and prints `PASS` / `FAIL`:
 ## Dependencies
 
 The rebrand pipeline publishes 11 packages including
-`@vertexdb/prisma-adapter-pg` and `@vertexdb/prisma-driver-adapter-utils`,
+`@vertexa/prisma-adapter-pg` and `@vertexa/prisma-driver-adapter-utils`,
 which ship the runtime bits that auto-detect PostGIS OIDs
 (`geometry` / `geography` → GeoJSON objects).
 
 `package.json` pulls them straight from npm:
 
 ```jsonc
-"@vertexdb/prisma-adapter-pg": "7.8.0",
-"@vertexdb/prisma-driver-adapter-utils": "7.8.0",
+"@vertexa/prisma-adapter-pg": "7.8.0",
+"@vertexa/prisma-driver-adapter-utils": "7.8.0",
 "pnpm": {
   "overrides": {
-    "@prisma/debug": "npm:@vertexdb/prisma-debug@7.8.0"
+    "@prisma/debug": "npm:@vertexa/prisma-debug@7.8.0"
   }
 }
 ```
@@ -67,7 +67,7 @@ which ship the runtime bits that auto-detect PostGIS OIDs
 ## Run
 
 ```bash
-pnpm generate    # runs `@vertexdb/prisma generate` from schema.prisma
+pnpm generate    # runs `@vertexa/prisma generate` from schema.prisma
 pnpm db:push     # pushes the schema (already passes --force-reset)
 pnpm check       # runs tsx src/index.ts
 ```

@@ -1,9 +1,9 @@
 # Forked Prisma — Publishing Guide
 
 Quy trình end-to-end để publish bản fork repo này lên npm dưới scope
-`@vertexdb/*` (hoặc bất kỳ scope nào bạn cấu hình), bao gồm cả **Rust engines**
+`@vertexa/*` (hoặc bất kỳ scope nào bạn cấu hình), bao gồm cả **Rust engines**
 (host trên GitHub Releases) và 3 **WASM packages**, sao cho người dùng chỉ cần
-`npm i @vertexdb/prisma @vertexdb/prisma-client` là dùng được code + engine
+`npm i @vertexa/prisma @vertexa/prisma-client` là dùng được code + engine
 của nhánh hiện tại không cần config thêm.
 
 > **Phạm vi**: scripts ở `scripts/fork/` rebrand 11 packages JS tối thiểu +
@@ -19,22 +19,22 @@ của nhánh hiện tại không cần config thêm.
 
 | Folder dưới `packages/` | Tên gốc                               | Tên fork                              |
 | ----------------------- | ------------------------------------- | ------------------------------------- |
-| `debug`                 | `@prisma/debug`                       | `@vertexdb/prisma-debug`                |
-| `driver-adapter-utils`  | `@prisma/driver-adapter-utils`        | `@vertexdb/prisma-driver-adapter-utils` |
-| `adapter-pg`            | `@prisma/adapter-pg`                  | `@vertexdb/prisma-adapter-pg`           |
-| `get-platform`          | `@prisma/get-platform`                | `@vertexdb/prisma-get-platform`         |
-| `engines-version-fork`  | `@prisma/engines-version-fork` (stub) | `@vertexdb/prisma-engines-version`      |
-| `fetch-engine`          | `@prisma/fetch-engine`                | `@vertexdb/prisma-fetch-engine`         |
-| `engines`               | `@prisma/engines`                     | `@vertexdb/prisma-engines`              |
-| `config`                | `@prisma/config`                      | `@vertexdb/prisma-config`               |
-| `client-runtime-utils`  | `@prisma/client-runtime-utils`        | `@vertexdb/prisma-client-runtime-utils` |
-| `client`                | `@prisma/client`                      | `@vertexdb/prisma-client`               |
-| `cli`                   | `prisma`                              | `@vertexdb/prisma`                      |
+| `debug`                 | `@prisma/debug`                       | `@vertexa/prisma-debug`                |
+| `driver-adapter-utils`  | `@prisma/driver-adapter-utils`        | `@vertexa/prisma-driver-adapter-utils` |
+| `adapter-pg`            | `@prisma/adapter-pg`                  | `@vertexa/prisma-adapter-pg`           |
+| `get-platform`          | `@prisma/get-platform`                | `@vertexa/prisma-get-platform`         |
+| `engines-version-fork`  | `@prisma/engines-version-fork` (stub) | `@vertexa/prisma-engines-version`      |
+| `fetch-engine`          | `@prisma/fetch-engine`                | `@vertexa/prisma-fetch-engine`         |
+| `engines`               | `@prisma/engines`                     | `@vertexa/prisma-engines`              |
+| `config`                | `@prisma/config`                      | `@vertexa/prisma-config`               |
+| `client-runtime-utils`  | `@prisma/client-runtime-utils`        | `@vertexa/prisma-client-runtime-utils` |
+| `client`                | `@prisma/client`                      | `@vertexa/prisma-client`               |
+| `cli`                   | `prisma`                              | `@vertexa/prisma`                      |
 
 `packages/engines-version-fork/` là **stub mới** trong fork. `rebrand.ts` sẽ
 gán `prisma.enginesVersion` = commit hash của `prisma-engines/` HEAD (hoặc
 `FORK_ENGINES_COMMIT`) trước khi publish. Mọi dep `@prisma/engines-version`
-trong các package khác được tự động đổi sang `@vertexdb/prisma-engines-version`.
+trong các package khác được tự động đổi sang `@vertexa/prisma-engines-version`.
 
 > **First-time setup**: commit thư mục `packages/engines-version-fork/` vào
 > nhánh fork của bạn (`git add packages/engines-version-fork && git commit`)
@@ -45,9 +45,9 @@ trong các package khác được tự động đổi sang `@vertexdb/prisma-eng
 
 | Cargo crate                          | Tên gốc                       | Tên fork                             |
 | ------------------------------------ | ----------------------------- | ------------------------------------ |
-| `prisma-schema-wasm`                 | `@prisma/prisma-schema-wasm`  | `@vertexdb/prisma-schema-wasm`         |
-| `schema-engine/schema-engine-wasm`   | `@prisma/schema-engine-wasm`  | `@vertexdb/prisma-schema-engine-wasm`  |
-| `query-compiler/query-compiler-wasm` | `@prisma/query-compiler-wasm` | `@vertexdb/prisma-query-compiler-wasm` |
+| `prisma-schema-wasm`                 | `@prisma/prisma-schema-wasm`  | `@vertexa/prisma-schema-wasm`         |
+| `schema-engine/schema-engine-wasm`   | `@prisma/schema-engine-wasm`  | `@vertexa/prisma-schema-engine-wasm`  |
+| `query-compiler/query-compiler-wasm` | `@prisma/query-compiler-wasm` | `@vertexa/prisma-query-compiler-wasm` |
 
 ### Native engine binaries (build → host trên GitHub Releases)
 
@@ -73,7 +73,7 @@ qua env var để dùng scope khác (ví dụ `FORK_SCOPE=@acme`).
 
 ## Yêu cầu trước khi publish
 
-- `npm login --scope=@vertexdb` (hoặc `NPM_TOKEN` qua `~/.npmrc`).
+- `npm login --scope=@vertexa` (hoặc `NPM_TOKEN` qua `~/.npmrc`).
 - Node `^20.19 || ^22.12 || >=24.0`, pnpm `>=10.15 <11`.
 - Docker daemon đang chạy (cho 2 platform Linux).
 - `gh` CLI: `brew install gh && gh auth login` — auth được vào `lh0x00/prisma`.
@@ -102,7 +102,7 @@ Pipeline (theo đúng thứ tự):
 9. `fork:publish` → `npm publish --ignore-scripts` 9 JS packages theo topo
 10. `fork:restore` → revert mọi thay đổi local (git restore tracked + reset stub `enginesVersion`)
 
-> **Tại sao tách `patch-source` ↔ `rebrand`**: Nếu `rebrand` chạy trước build, nó sẽ xóa `devDependencies` của `@vertexdb/prisma-client`, làm Turborepo mất signal về dep chain `client → internals → get-dmmf` (chain qua devDeps). Hệ quả: turbo schedule song song → race condition, build fail với `Could not resolve "@prisma/get-dmmf"`. Vì vậy `rebrand` phải chạy SAU build.
+> **Tại sao tách `patch-source` ↔ `rebrand`**: Nếu `rebrand` chạy trước build, nó sẽ xóa `devDependencies` của `@vertexa/prisma-client`, làm Turborepo mất signal về dep chain `client → internals → get-dmmf` (chain qua devDeps). Hệ quả: turbo schedule song song → race condition, build fail với `Could not resolve "@prisma/get-dmmf"`. Vì vậy `rebrand` phải chạy SAU build.
 
 ### Dry-run (an toàn — không động vào npm/Docker/GitHub)
 
@@ -176,7 +176,7 @@ FORK_VERSION=7.8.0 pnpm fork:engines:build:wasm --only prisma-schema-engine-wasm
 | Env                   | Flag         | Default                                                      | Mô tả                                                            |
 | --------------------- | ------------ | ------------------------------------------------------------ | ---------------------------------------------------------------- |
 | `FORK_VERSION`        | `--version`  | (bắt buộc)                                                   | Phiên bản semver gán cho mọi package fork                        |
-| `FORK_SCOPE`          | `--scope`    | `@vertexdb`                                                    | Scope npm                                                        |
+| `FORK_SCOPE`          | `--scope`    | `@vertexa`                                                    | Scope npm                                                        |
 | `FORK_TAG`            | `--tag`      | `latest`                                                     | dist-tag truyền cho `npm publish`                                |
 | `FORK_DRY_RUN`        | `--dry-run`  | `false`                                                      | Bật dry-run cho mọi script                                       |
 | `FORK_ONLY`           | `--only`     | (tất cả)                                                     | Chỉ publish slug được liệt kê (vd `prisma-debug,prisma-engines`) |
@@ -191,11 +191,11 @@ FORK_VERSION=7.8.0 pnpm fork:engines:build:wasm --only prisma-schema-engine-wasm
 ## Người dùng cuối dùng fork ra sao
 
 ```bash
-npm i -D @vertexdb/prisma
-npm i    @vertexdb/prisma-client
+npm i -D @vertexa/prisma
+npm i    @vertexa/prisma-client
 ```
 
-Generator output (`prisma generate`) sẽ tự `require('@vertexdb/prisma-client/runtime/library')`
+Generator output (`prisma generate`) sẽ tự `require('@vertexa/prisma-client/runtime/library')`
 vì các bundle output đã được rewrite — đây là lý do bước `fork:rebrand`
 phải chạy **sau** `fork:build`.
 
@@ -241,7 +241,7 @@ client → cli`.
 - `Working tree is dirty under packages/`: chạy `pnpm fork:restore` hoặc
   commit/stash các thay đổi local trước.
 - `npm publish` báo `403 Forbidden`: kiểm tra `npm whoami`, đảm bảo scope
-  `@vertexdb` thuộc account của bạn (hoặc tổ chức bạn có quyền).
+  `@vertexa` thuộc account của bạn (hoặc tổ chức bạn có quyền).
 - `npm publish` báo `cannot publish over previously published version`:
   bump `FORK_VERSION` (ví dụ `7.8.1`).
 - Engine không tải được khi user cài fork: kiểm tra rằng `@prisma/engines-version`

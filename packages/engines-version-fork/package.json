@@ -1,5 +1,5 @@
 {
-  "name": "@vertexdb/prisma-engines-version",
+  "name": "@vertexa/prisma-engines-version",
   "version": "7.8.0",
   "description": "Forked counterpart of @prisma/engines-version. The actual commit hash is filled in by `scripts/fork/rebrand.ts` before publishing.",
   "main": "index.js",

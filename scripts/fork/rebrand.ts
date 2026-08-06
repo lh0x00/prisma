@@ -216,7 +216,7 @@ async function rewriteTextFiles(pkgDir: string) {
       '**/*.tsbuildinfo',
       // `package.json` is rewritten precisely in `patchPackageJson`.
       // Skipping here avoids double-encoding (e.g. `prisma` getting
-      // re-matched inside the freshly written `@vertexdb/prisma` value).
+      // re-matched inside the freshly written `@vertexa/prisma` value).
       'package.json',
     ],
   })
@@ -226,14 +226,14 @@ async function rewriteTextFiles(pkgDir: string) {
   //
   // Scoped names (`@prisma/<foo>`): allow `/` on either side so that nested
   // ESM import paths like `'@prisma/client/runtime/library'` get rewritten
-  // to `'@vertexdb/prisma-client/runtime/library'` — the trailing `/runtime/…`
+  // to `'@vertexa/prisma-client/runtime/library'` — the trailing `/runtime/…`
   // is a legitimate package-subpath continuation.
   //
   // Bare names (`prisma`): quote/backtick on BOTH sides, *no* slash. Without
   // this the regex matches the CLI name inside arbitrary filesystem paths
-  // and URLs (e.g. `'./prisma/schema.prisma'` → `'./@vertexdb/prisma/schema.prisma'`
+  // and URLs (e.g. `'./prisma/schema.prisma'` → `'./@vertexa/prisma/schema.prisma'`
   // or `'https://github.com/lh0x00/prisma/releases/...'` →
-  // `'https://github.com/lh0x00/@vertexdb/prisma/releases/...'`). Both
+  // `'https://github.com/lh0x00/@vertexa/prisma/releases/...'`). Both
   // corruptions break the fork at runtime; quote-only is the conservative
   // boundary that still rewrites every legitimate `require('prisma')` /
   // `import('prisma')` / `"prisma"` package-name reference.
