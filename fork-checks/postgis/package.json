@@ -1,0 +1,43 @@
+{
+  "private": true,
+  "name": "fork-postgis-check",
+  "version": "0.0.0",
+  "description": "Production smoke test for @vertex/* fork PostGIS / geometry features.",
+  "type": "commonjs",
+  "scripts": {
+    "db:up": "docker compose -f ../../docker/postgis-test.yml up -d",
+    "db:down": "docker compose -f ../../docker/postgis-test.yml down",
+    "db:logs": "docker compose -f ../../docker/postgis-test.yml logs -f",
+    "prisma": "prisma",
+    "generate": "prisma generate",
+    "db:push": "prisma db push --force-reset --skip-generate",
+    "check": "tsx src/index.ts",
+    "setup": "pnpm install --ignore-workspace && pnpm db:up && pnpm generate && pnpm db:push",
+    "all": "pnpm setup && pnpm check"
+  },
+  "dependencies": {
+    "@vertex/prisma-client": "7.8.0-postgis.0",
+    "@vertex/prisma-adapter-pg": "7.8.0-postgis.0",
+    "@vertex/prisma-driver-adapter-utils": "7.8.0-postgis.0",
+    "dotenv": "^16.4.7",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@vertex/prisma": "7.8.0-postgis.0",
+    "@vertex/prisma-config": "7.8.0-postgis.0",
+    "@types/node": "^22.10.0",
+    "@types/pg": "^8.16.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "@prisma/debug": "npm:@vertex/prisma-debug@7.8.0-postgis.0"
+    },
+    "onlyBuiltDependencies": [
+      "@vertex/prisma",
+      "@vertex/prisma-engines",
+      "esbuild"
+    ]
+  }
+}

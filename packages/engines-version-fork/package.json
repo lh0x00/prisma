@@ -1,0 +1,20 @@
+{
+  "name": "@vertex/prisma-engines-version",
+  "version": "7.8.0",
+  "description": "Forked counterpart of @prisma/engines-version. The actual commit hash is filled in by `scripts/fork/rebrand.ts` before publishing.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "license": "Apache-2.0",
+  "private": false,
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "README.md"
+  ],
+  "prisma": {
+    "enginesVersion": "0000000000000000000000000000000000000000"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

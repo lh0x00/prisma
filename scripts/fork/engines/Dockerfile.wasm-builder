@@ -1,0 +1,60 @@
+# All-in-one builder image for the WASM crates inside `prisma-engines/`.
+# Provides: stable Rust + wasm32-unknown-unknown target, wasm-bindgen-cli,
+# binaryen (`wasm-opt`), jq, protoc and the supporting build deps used by
+# the upstream `build.sh` scripts in:
+#   - prisma-schema-wasm/
+#   - schema-engine/schema-engine-wasm/
+#   - query-compiler/query-compiler-wasm/
+#
+# Usage (driven by `scripts/fork/engines/build-wasm.ts`):
+#   docker build -f scripts/fork/engines/Dockerfile.wasm-builder \
+#     -t vertex/prisma-builder:wasm scripts/fork/engines
+#
+#   docker run --rm \
+#     -e WASM_BUILD_PROFILE=release \
+#     -e SCHEMA_ENGINE_WASM_VERSION=$FORK_VERSION \
+#     -e QE_WASM_VERSION=$FORK_VERSION \
+#     -e SCHEMA_WASM_VERSION=$FORK_VERSION \
+#     -v "$PWD/prisma-engines:/src" \
+#     -v "${HOME}/.cargo/registry:/root/.cargo/registry" \
+#     vertex/prisma-builder:wasm \
+#     make -C /src build-se-wasm build-qc-wasm build-schema-wasm
+
+FROM rust:1.86-bookworm
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      build-essential \
+      ca-certificates \
+      cmake \
+      curl \
+      git \
+      jq \
+      libssl-dev \
+      pkg-config \
+      protobuf-compiler \
+      wabt \
+ && rm -rf /var/lib/apt/lists/*
+
+# wasm32 target + wasm-bindgen-cli. The CLI version MUST match the
+# `wasm-bindgen` crate version pinned in `prisma-engines/Cargo.lock` —
+# wasm-bindgen rejects builds where lib & cli schema versions differ.
+# `build-wasm.ts` parses Cargo.lock and forwards the value via build-arg.
+ARG WASM_BINDGEN_VERSION=0.2.105
+RUN rustup target add wasm32-unknown-unknown \
+ && cargo install wasm-bindgen-cli --locked --version "${WASM_BINDGEN_VERSION}"
+
+# Binaryen (wasm-opt). Use the upstream prebuilt release for speed.
+ARG BINARYEN_VERSION=version_117
+RUN curl -L "https://github.com/WebAssembly/binaryen/releases/download/${BINARYEN_VERSION}/binaryen-${BINARYEN_VERSION}-x86_64-linux.tar.gz" \
+      -o /tmp/binaryen.tgz \
+ && tar -xzf /tmp/binaryen.tgz -C /opt \
+ && ln -s "/opt/binaryen-${BINARYEN_VERSION}/bin/wasm-opt" /usr/local/bin/wasm-opt \
+ && rm /tmp/binaryen.tgz
+
+WORKDIR /src
+
+ENTRYPOINT ["/bin/bash", "-c"]
+CMD ["echo 'Override CMD with the make targets you want, e.g. make -C /src build-se-wasm build-qc-wasm build-schema-wasm'"]
