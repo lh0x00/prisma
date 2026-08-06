@@ -25,7 +25,8 @@ RUN apk add --no-cache \
       openssl-libs-static \
       perl \
       pkgconfig \
-      protobuf-dev
+      protobuf-dev \
+      zlib-dev
 
 # Statically link OpenSSL into the resulting binary so it runs on plain
 # Alpine images without the host having to ship libssl.
