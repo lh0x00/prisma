@@ -12,7 +12,10 @@
  *   1. Patch `packages/fetch-engine/src/utils.ts` so the published code
  *      defaults to a GitHub Release flat-asset URL pattern instead of
  *      `https://binaries.prisma.sh/all_commits/<hash>/<target>/<engine>.gz`.
- *   2. Stamp `packages/engines-version-fork/package.json#prisma.enginesVersion`
+ *   2. Patch `packages/cli/src/Init.ts` so the generated `prisma.config.ts`
+ *      template imports from `@<scope>/prisma/config` instead of bare
+ *      `prisma/config` (which won't resolve after rebrand).
+ *   3. Stamp `packages/engines-version-fork/package.json#prisma.enginesVersion`
  *      with the local `prisma-engines/` HEAD commit (or `FORK_ENGINES_COMMIT`)
  *      so the matching tag (`engines-<hash>`) is the one we will upload to.
  *
@@ -31,6 +34,7 @@ import { bold, cyan, dim, green, red, yellow } from 'kleur/colors'
 
 import {
   FORK_GH_REPO,
+  FORK_SCOPE,
   releaseTagFor,
   resolveEnginesCommitHash,
   WASM_CRATES,
@@ -114,6 +118,37 @@ async function patchFetchEngineSource(enginesCommitHash: string): Promise<void> 
   } else {
     await fs.writeFile(file, next)
     console.log(`${green('  ✓')} fetch-engine src patch  ${dim('default -> ' + forkBaseUrl)}`)
+  }
+}
+
+/**
+ * Patch `packages/cli/src/Init.ts` so the generated `prisma.config.ts`
+ * template imports from `@vertexa/prisma/config` instead of the bare
+ * `prisma/config` — the bare name won't resolve after rebrand because
+ * the published package is `@vertexa/prisma`, not `prisma`.
+ *
+ * Idempotent: skips if already patched.
+ */
+async function patchInitTemplate(): Promise<void> {
+  const file = path.join(packagesRoot, 'cli', 'src', 'Init.ts')
+  const original = await fs.readFile(file, 'utf8')
+
+  const upstreamImport = 'from "prisma/config"'
+  const forkedImport = `from "${FORK_SCOPE}/prisma/config"`
+
+  if (!original.includes(upstreamImport)) {
+    // Already patched or upstream changed the template.
+    console.log(`${dim('  ·')} cli Init.ts template ${dim('(already patched or no match)')}`)
+    return
+  }
+
+  const next = original.split(upstreamImport).join(forkedImport)
+
+  if (DRY_RUN) {
+    console.log(`${green('  ✓')} cli Init.ts template ${dim('(dry-run)')}  ${dim(`-> ${forkedImport}`)}`)
+  } else {
+    await fs.writeFile(file, next)
+    console.log(`${green('  ✓')} cli Init.ts template  ${dim(`-> ${forkedImport}`)}`)
   }
 }
 
@@ -271,6 +306,7 @@ async function main() {
   console.log()
 
   await patchFetchEngineSource(enginesCommitHash)
+  await patchInitTemplate()
   await stampEnginesVersionStub(enginesCommitHash)
   await injectLocalWasmDeps()
 
