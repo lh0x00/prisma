@@ -246,6 +246,11 @@ export function buildNameMap(scope = FORK_SCOPE): Map<string, string> {
 export const REWRITE_GLOBS = [
   'package.json',
   'README.md',
+  // Root-level re-export shims (e.g. config.js re-exports from @prisma/config)
+  '*.js',
+  '*.cjs',
+  '*.mjs',
+  '*.d.ts',
   // Standard build output dirs
   'build/**/*',
   'dist/**/*',
