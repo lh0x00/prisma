@@ -246,9 +246,13 @@ async function rewriteTextFiles(pkgDir: string) {
   if (scopedNames.length) {
     patterns.push(new RegExp(`(?<=["'\`/])(?:${scopedNames.map(escapeRe).join('|')})(?=["'\`/])`, 'g'))
   }
-  if (bareNames.length) {
-    patterns.push(new RegExp(`(?<=["'\`])(?:${bareNames.map(escapeRe).join('|')})(?=["'\`])`, 'g'))
-  }
+  // Bare names (e.g. `prisma`) are ONLY renamed in package.json — never in
+  // bundled text files. The bare string `'prisma'` appears in many legitimate
+  // non-package contexts (filesystem paths like `path.join(cwd, 'prisma')`,
+  // cache dir names, env var prefixes) and rewriting them corrupts runtime
+  // behaviour. esbuild has already resolved any `require('prisma')` /
+  // `import 'prisma'` references at build time, so there is nothing left to
+  // rewrite in dist output.
 
   let totalReplacements = 0
   let touchedFiles = 0
