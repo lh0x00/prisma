@@ -101,11 +101,18 @@ async function uploadAssets(tag: string) {
   const targets = resolveEngineTargets()
   let uploaded = 0
 
+  // Copy artifacts to a temp dir with the correct asset names, then upload
+  // in a single `gh release upload` call. We can't use the `#` rename syntax
+  // because it is unreliable across shell/gh versions.
+  const tmpDir = await fs.mkdtemp(path.join(require('node:os').tmpdir(), 'vertexa-engines-'))
+  const files: string[] = []
+
   for (const target of targets) {
     for (const engine of NATIVE_ENGINES) {
       const dir = path.join(distDir, target.slug)
       const gz = path.join(dir, `${engine}.gz`)
-      const sha = path.join(dir, `${engine}.gz.sha256`)
+      const sha = path.join(dir, `${engine}.sha256`)
+      const gzSha = path.join(dir, `${engine}.gz.sha256`)
 
       const gzExists = await fs.stat(gz).catch(() => null)
       if (!gzExists) {
@@ -117,18 +124,38 @@ async function uploadAssets(tag: string) {
 
       // Rename on upload to GitHub's flat asset namespace: `<slug>__<engine>.gz`.
       const gzAsset = `${target.slug}__${engine}.gz`
-      const shaAsset = `${target.slug}__${engine}.gz.sha256`
+      const shaAsset = `${target.slug}__${engine}.sha256`
+      const gzShaAsset = `${target.slug}__${engine}.gz.sha256`
 
-      await run(`gh release upload ${tag} '${gz}#${gzAsset}' --clobber --repo ${REPO}`)
+      const gzTmp = path.join(tmpDir, gzAsset)
+      await fs.copyFile(gz, gzTmp)
+      files.push(gzTmp)
+
       const shaExists = await fs.stat(sha).catch(() => null)
       if (shaExists) {
-        await run(`gh release upload ${tag} '${sha}#${shaAsset}' --clobber --repo ${REPO}`)
+        const shaTmp = path.join(tmpDir, shaAsset)
+        await fs.copyFile(sha, shaTmp)
+        files.push(shaTmp)
       }
+
+      const gzShaExists = await fs.stat(gzSha).catch(() => null)
+      if (gzShaExists) {
+        const gzShaTmp = path.join(tmpDir, gzShaAsset)
+        await fs.copyFile(gzSha, gzShaTmp)
+        files.push(gzShaTmp)
+      }
+
       console.log(`${green('  ✓ uploaded')} ${cyan(`${tag}/${gzAsset}`)}`)
       uploaded += 1
     }
   }
 
+  if (files.length > 0) {
+    const fileList = files.map((f) => `'${f}'`).join(' ')
+    await run(`gh release upload ${tag} ${fileList} --clobber --repo ${REPO}`)
+  }
+
+  await fs.rm(tmpDir, { recursive: true, force: true })
   return uploaded
 }
 

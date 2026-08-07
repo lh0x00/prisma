@@ -99,6 +99,10 @@ async function buildHost(target: { slug: string; rustTarget: string }) {
     await run(`install -m0755 '${built}' '${path.join(slugDir, engine)}'`, repoRoot)
     await run(`gzip -fk '${path.join(slugDir, engine)}'`, repoRoot)
     await run(
+      `( cd '${slugDir}' && shasum -a 256 '${engine}' | awk '{print $1"  "$2}' > '${engine}.sha256' )`,
+      repoRoot,
+    )
+    await run(
       `( cd '${slugDir}' && shasum -a 256 '${engine}.gz' | awk '{print $1"  "$2}' > '${engine}.gz.sha256' )`,
       repoRoot,
     )

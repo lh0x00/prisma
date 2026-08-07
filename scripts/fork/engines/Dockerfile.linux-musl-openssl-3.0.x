@@ -51,5 +51,6 @@ ENTRYPOINT ["/bin/bash", "-c", "set -euo pipefail; \
   install -d \"${OUT_DIR}/${TARGET_SLUG}\"; \
   install -m0755 \"target/${CARGO_TARGET}/release/${BINARY_NAME}\" \"${OUT_DIR}/${TARGET_SLUG}/${BINARY_NAME}\"; \
   gzip -fk \"${OUT_DIR}/${TARGET_SLUG}/${BINARY_NAME}\"; \
+  ( cd \"${OUT_DIR}/${TARGET_SLUG}\" && sha256sum \"${BINARY_NAME}\" | awk '{print $1\"  \"$2}' > \"${BINARY_NAME}.sha256\" ); \
   ( cd \"${OUT_DIR}/${TARGET_SLUG}\" && sha256sum \"${BINARY_NAME}.gz\" | awk '{print $1\"  \"$2}' > \"${BINARY_NAME}.gz.sha256\" ); \
   echo \"built ${TARGET_SLUG}/${BINARY_NAME}.gz\""]
