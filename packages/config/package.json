@@ -1,7 +1,16 @@
 {
   "name": "@prisma/config",
   "version": "0.0.0",
-  "description": "Internal package used to define and read Prisma configuration files",
+  "description": "Fork of @prisma/config — loader for prisma.config.ts configuration files. Internal package consumed by @vertexa/prisma CLI.",
+  "keywords": [
+    "Prisma",
+    "config",
+    "configuration",
+    "prisma.config.ts",
+    "internal",
+    "fork",
+    "vertexa"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": {

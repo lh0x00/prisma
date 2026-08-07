@@ -1,7 +1,7 @@
 {
   "version": "0.0.0",
   "name": "prisma",
-  "description": "Prisma is an open-source database toolkit. It includes a JavaScript/TypeScript ORM for Node.js, migrations and a modern GUI to view and edit the data in your database. You can use Prisma in new projects or add it to an existing one.",
+  "description": "Fork of Prisma ORM CLI with PostGIS support — database toolkit with schema migrations, code generation, and type-safe queries for PostgreSQL, MySQL, SQLite, SQL Server, and MongoDB. Adds native Geometry/Geography scalar types and spatial filters (near, within, intersects).",
   "keywords": [
     "CLI",
     "ORM",
@@ -26,7 +26,15 @@
     "SQL Server",
     "SQLServer",
     "MongoDB",
-    "MCP"
+    "MCP",
+    "PostGIS",
+    "geometry",
+    "geography",
+    "spatial",
+    "GeoJSON",
+    "GIS",
+    "fork",
+    "vertexa"
   ],
   "main": "build/index.js",
   "repository": {

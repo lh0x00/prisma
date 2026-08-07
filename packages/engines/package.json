@@ -1,7 +1,18 @@
 {
   "name": "@prisma/engines",
   "version": "0.0.0",
-  "description": "This package is intended for Prisma's internal use",
+  "description": "Fork of @prisma/engines — downloads Prisma schema-engine native binary from GitHub Releases. Internal package consumed by @vertexa/prisma CLI.",
+  "keywords": [
+    "Prisma",
+    "engines",
+    "binary",
+    "schema-engine",
+    "download",
+    "native",
+    "internal",
+    "fork",
+    "vertexa"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": {

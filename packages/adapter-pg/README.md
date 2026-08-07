@@ -1,39 +1,32 @@
-# @prisma/adapter-pg
+# @vertexa/prisma-adapter-pg
 
-This package contains the driver adapter for Prisma ORM that enables usage of the [`node-postgres`](https://node-postgres.com/) (`pg`) database driver for PostgreSQL. You can learn more in the [documentation](https://pris.ly/d/adapter-pg).
+Fork of [`@prisma/adapter-pg`](https://github.com/prisma/prisma) with **PostGIS OID detection**.
 
-`pg` is one of the most popular drivers in the JavaScript ecosystem for PostgreSQL databases. It can be used with any PostgreSQL database that's accessed via TCP.
+Driver adapter for Prisma ORM that enables usage of the [`node-postgres`](https://node-postgres.com/) (`pg`) database driver for PostgreSQL — same as upstream, plus automatic detection of PostGIS `geometry` / `geography` column OIDs so they are returned as typed GeoJSON objects instead of raw bytes.
 
-> **Note:**: Support for the `pg` driver is available from Prisma versions [5.4.2](https://github.com/prisma/prisma/releases/tag/5.4.2) and later.
+## Install
+
+```bash
+npm install @vertexa/prisma-adapter-pg
+```
 
 ## Usage
 
-This section explains how you can use it with Prisma ORM and the `@prisma/adapter-pg` driver adapter. Be sure that the `DATABASE_URL` environment variable is set to your PostgreSQL connection string (e.g. loaded using `dotenv` from a `.env` file).
+```typescript
+import { PrismaPg } from '@vertexa/prisma-adapter-pg'
+import { PrismaClient } from '@vertexa/prisma-client'
+import { Pool } from 'pg'
 
-### 1. Install the dependencies
-
-Install the Prisma ORM's driver adapter for pg:
-
-```
-npm install @prisma/adapter-pg
-```
-
-### 2. Instantiate Prisma Client using the driver adapter
-
-Finally, when you instantiate Prisma Client, you need to pass an instance of Prisma ORM's driver adapter to the `PrismaClient` constructor:
-
-```ts
-import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from '@prisma/client'
-
-const connectionString = `${process.env.DATABASE_URL}`
-
-const adapter = new PrismaPg({ connectionString })
+const adapter = new PrismaPg(new Pool({ connectionString: process.env.DATABASE_URL }))
 const prisma = new PrismaClient({ adapter })
 ```
 
-## Feedback
+## What's different from upstream?
 
-We encourage you to create an issue if you find something missing or run into a bug.
+The fork patches the adapter to recognize PostGIS OIDs (`geometry`, `geography`) and decode the EWKB bytes returned by `pg` into GeoJSON objects that Prisma Client can work with directly. Without this, PostGIS columns come back as opaque `Buffer` values.
 
-If you have any feedback, leave a comment in [this GitHub discussion](https://github.com/prisma/prisma/discussions/22899).
+This adapter is required for PostGIS features (`near`, `within`, `intersects`, `distanceFrom`) to work with `@vertexa/prisma-client`.
+
+## License
+
+Apache-2.0

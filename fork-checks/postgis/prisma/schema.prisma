@@ -1,0 +1,42 @@
+// Smoke-test schema for fork PostGIS support.
+// Uses `Geometry`/`Geography` scalars + `@db.Geometry`/`@db.Geography` native attributes.
+// `Geography` is used for fields that need `near` filter with meter-based distances.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Location {
+  id       Int         @id @default(autoincrement())
+  name     String
+  position Geography?  @db.Geography(Point, 4326)
+}
+
+model LocationGeom {
+  id       Int      @id @default(autoincrement())
+  name     String
+  position Geometry? @db.Geometry(Point, 4326)
+}
+
+model LocationMercator {
+  id       Int      @id @default(autoincrement())
+  name     String
+  position Geometry? @db.Geometry(Point, 3857)
+}
+
+model Route {
+  id   Int      @id @default(autoincrement())
+  name String
+  path Geometry? @db.Geometry(LineString, 4326)
+}
+
+model Area {
+  id       Int      @id @default(autoincrement())
+  name     String
+  boundary Geometry? @db.Geometry(Polygon, 4326)
+}

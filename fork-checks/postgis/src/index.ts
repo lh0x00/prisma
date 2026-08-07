@@ -19,8 +19,9 @@
  */
 
 import 'dotenv/config'
+
 import { PrismaPg } from '@vertexa/prisma-adapter-pg'
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 import { Prisma, PrismaClient } from '../generated/prisma/client'
 
 type Check = { name: string; run: (prisma: PrismaClient) => Promise<void> }
@@ -50,7 +51,15 @@ const checks: Check[] = [
       const created = await prisma.route.create({
         data: {
           name: 'RouteA',
-          path: { type: 'LineString', coordinates: [[0, 0], [1, 1], [2, 0]], srid: 4326 },
+          path: {
+            type: 'LineString',
+            coordinates: [
+              [0, 0],
+              [1, 1],
+              [2, 0],
+            ],
+            srid: 4326,
+          },
         },
       })
       const found = await prisma.route.findUnique({ where: { id: created.id } })
@@ -64,8 +73,20 @@ const checks: Check[] = [
       const polygon: Prisma.InputGeometry = {
         type: 'Polygon',
         coordinates: [
-          [[0, 0], [0, 10], [10, 10], [10, 0], [0, 0]],
-          [[3, 3], [3, 7], [7, 7], [7, 3], [3, 3]],
+          [
+            [0, 0],
+            [0, 10],
+            [10, 10],
+            [10, 0],
+            [0, 0],
+          ],
+          [
+            [3, 3],
+            [3, 7],
+            [7, 7],
+            [7, 3],
+            [3, 3],
+          ],
         ],
         srid: 4326,
       }
@@ -94,17 +115,23 @@ const checks: Check[] = [
   {
     name: 'within filter (ST_Within) selects centroids inside a square',
     run: async (prisma) => {
-      await prisma.location.createMany({
+      await prisma.locationGeom.createMany({
         data: [
           { name: 'Center', position: { type: 'Point', coordinates: [0.5, 0.5], srid: 4326 } },
           { name: 'Outside', position: { type: 'Point', coordinates: [5, 5], srid: 4326 } },
         ],
       })
-      const within = await prisma.location.findMany({
+      const within = await prisma.locationGeom.findMany({
         where: {
           position: {
             within: {
-              polygon: [[0, 0], [0, 1], [1, 1], [1, 0], [0, 0]],
+              polygon: [
+                [0, 0],
+                [0, 1],
+                [1, 1],
+                [1, 0],
+                [0, 0],
+              ],
             },
           },
         },
@@ -121,7 +148,15 @@ const checks: Check[] = [
           name: 'TestArea',
           boundary: {
             type: 'Polygon',
-            coordinates: [[[0, 0], [0, 2], [2, 2], [2, 0], [0, 0]]],
+            coordinates: [
+              [
+                [0, 0],
+                [0, 2],
+                [2, 2],
+                [2, 0],
+                [0, 0],
+              ],
+            ],
             srid: 4326,
           },
         },
@@ -132,7 +167,15 @@ const checks: Check[] = [
             intersects: {
               geometry: {
                 type: 'Polygon',
-                coordinates: [[[1, 1], [1, 3], [3, 3], [3, 1], [1, 1]]],
+                coordinates: [
+                  [
+                    [1, 1],
+                    [1, 3],
+                    [3, 3],
+                    [3, 1],
+                    [1, 1],
+                  ],
+                ],
               },
             },
           },
@@ -233,7 +276,10 @@ const checks: Check[] = [
       const near = await prisma.locationMercator.findMany({
         where: { position: { near: { point: [1000000, 6000000], maxDistance: 5000, srid: 3857 } } },
       })
-      const names = near.map((r) => r.name).sort().join(',')
+      const names = near
+        .map((r) => r.name)
+        .sort()
+        .join(',')
       assertEqual(names, 'P1,P2')
     },
   },
@@ -275,8 +321,9 @@ function assertDeepEqual(actual: unknown, expected: unknown): void {
 }
 
 async function resetTables(prisma: PrismaClient): Promise<void> {
-  // Order matters only if FK constraints exist – here all four are independent.
+  // Order matters only if FK constraints exist – here all five are independent.
   await prisma.location.deleteMany({})
+  await prisma.locationGeom.deleteMany({})
   await prisma.locationMercator.deleteMany({})
   await prisma.route.deleteMany({})
   await prisma.area.deleteMany({})

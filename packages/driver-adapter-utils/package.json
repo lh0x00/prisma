@@ -1,7 +1,21 @@
 {
   "name": "@prisma/driver-adapter-utils",
   "version": "0.0.0",
-  "description": "Internal set of utilities and types for Prisma's driver adapters.",
+  "description": "Fork of @prisma/driver-adapter-utils — shared utilities and types for Prisma driver adapters, with PostGIS OID detection support. Internal package.",
+  "keywords": [
+    "Prisma",
+    "driver-adapter",
+    "adapter",
+    "utils",
+    "utilities",
+    "PostGIS",
+    "geometry",
+    "geography",
+    "OID",
+    "internal",
+    "fork",
+    "vertexa"
+  ],
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -30,7 +44,6 @@
     "dist",
     "README.md"
   ],
-  "keywords": [],
   "author": "Alberto Schiabel <schiabel@prisma.io>",
   "license": "Apache-2.0",
   "sideEffects": false,

@@ -1,7 +1,7 @@
 {
   "name": "@prisma/client",
   "version": "0.0.0",
-  "description": "Prisma Client is an auto-generated, type-safe and modern JavaScript/TypeScript ORM for Node.js that's tailored to your data. Supports PostgreSQL, CockroachDB, MySQL, MariaDB, SQL Server, SQLite & MongoDB databases.",
+  "description": "Fork of Prisma Client — auto-generated, type-safe ORM for Node.js with PostGIS support. Adds Geometry/Geography scalar types, spatial query filters (near, within, intersects, distanceFrom), and GeoJSON serialization for PostgreSQL.",
   "keywords": [
     "ORM",
     "Prisma",
@@ -27,7 +27,15 @@
     "MSSQL",
     "SQL Server",
     "SQLServer",
-    "MongoDB"
+    "MongoDB",
+    "PostGIS",
+    "geometry",
+    "geography",
+    "spatial",
+    "GeoJSON",
+    "GIS",
+    "fork",
+    "vertexa"
   ],
   "main": "default.js",
   "types": "default.d.ts",

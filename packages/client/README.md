@@ -1,26 +1,117 @@
-# Prisma Client &middot; [![npm version](https://img.shields.io/npm/v/@prisma/client.svg?style=flat)](https://www.npmjs.com/package/@prisma/client) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/prisma/prisma/blob/main/CONTRIBUTING.md) [![GitHub license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/prisma/prisma/blob/main/LICENSE) [![Discord](https://img.shields.io/discord/937751382725886062?label=Discord)](https://pris.ly/discord)
+# @vertexa/prisma-client
 
-Prisma Client JS is an **auto-generated query builder** that enables **type-safe** database access and **reduces boilerplate**. You can use it as an alternative to traditional ORMs such as Sequelize, TypeORM or SQL query builders like knex.js.
+Fork of [Prisma Client](https://github.com/prisma/prisma) with **PostGIS / Geometry support**.
 
-It is part of the [Prisma](https://www.prisma.io/) ecosystem. Prisma provides database tools for data access, declarative data modeling, schema migrations and visual data management. Learn more in the main [`prisma`](https://github.com/prisma/prisma/) repository or read the [documentation](https://www.prisma.io/docs/).
+Auto-generated, type-safe query builder for Node.js and TypeScript — same as upstream `@prisma/client`, plus native PostGIS geometry types and spatial query filters.
 
-## Getting started
+## Install
 
-Follow one of these guides to get started with Prisma Client JS:
+```bash
+npm install @vertexa/prisma-client @vertexa/prisma
+```
 
-- [Quickstart](https://www.prisma.io/docs/getting-started/prisma-orm/quickstart/prisma-postgres) (5 min)
-- [Getting started with Prisma Migrate](https://www.prisma.io/docs/orm/prisma-migrate/getting-started) (15 min)
-- [Add Prisma to an existing project](https://www.prisma.io/docs/getting-started/prisma-orm/add-to-existing-project/prisma-postgres) (15 min)
+## Usage
 
-Alternatively you can explore the ready-to-run [examples](https://github.com/prisma/prisma-examples/) (REST, GraphQL, gRPC, plain JavaScript and TypeScript demos, ...) or watch the [demo videos](https://www.youtube.com/watch?v=0RhtQgIs-TE&list=PLn2e1F9Rfr6k9PnR_figWOcSHgc_erDr5&index=1) (1-2 min per video).
+```typescript
+import { PrismaClient } from '@vertexa/prisma-client'
+import { PrismaPg } from '@vertexa/prisma-adapter-pg'
+import { Pool } from 'pg'
 
-## Contributing
+const prisma = new PrismaClient({
+  adapter: new PrismaPg(new Pool({ connectionString: process.env.DATABASE_URL })),
+})
+```
 
-Refer to our [contribution guidelines](https://github.com/prisma/prisma/blob/main/CONTRIBUTING.md) and [Code of Conduct for contributors](https://github.com/prisma/prisma/blob/main/CODE_OF_CONDUCT.md).
+### PostGIS
 
-## Tests Status
+The fork adds two scalar types and spatial filters not available in upstream Prisma:
 
-- Prisma Tests Status:  
-  [![CI](https://github.com/prisma/prisma/actions/workflows/test.yml/badge.svg)](https://github.com/prisma/prisma/actions/workflows/test.yml)
-- Ecosystem Tests Status:  
-  [![Actions Status](https://github.com/prisma/ecosystem-tests/workflows/test/badge.svg)](https://github.com/prisma/ecosystem-tests/actions)
+```prisma
+model Location {
+  id       Int        @id @default(autoincrement())
+  name     String
+  position Geography? @db.Geography(Point, 4326)
+}
+
+model Area {
+  id       Int       @id @default(autoincrement())
+  name     String
+  boundary Geometry? @db.Geometry(Polygon, 4326)
+}
+```
+
+```typescript
+// Insert GeoJSON
+await prisma.location.create({
+  data: { name: 'Paris', position: { type: 'Point', coordinates: [2.35, 48.85], srid: 4326 } },
+})
+
+// near → ST_DWithin (distance in meters, requires Geography)
+await prisma.location.findMany({
+  where: { position: { near: { point: [2.35, 48.85], distance: 1000 } } },
+})
+
+// intersects → ST_Intersects
+await prisma.area.findMany({
+  where: {
+    boundary: {
+      intersects: {
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [1, 1],
+              [1, 3],
+              [3, 3],
+              [3, 1],
+              [1, 1],
+            ],
+          ],
+        },
+      },
+    },
+  },
+})
+
+// within → ST_Within
+await prisma.location.findMany({
+  where: {
+    position: {
+      within: {
+        polygon: [
+          [0, 0],
+          [0, 1],
+          [1, 1],
+          [1, 0],
+          [0, 0],
+        ],
+      },
+    },
+  },
+})
+
+// orderBy distanceFrom → ST_Distance
+await prisma.location.findMany({ orderBy: { position: { distanceFrom: [2.35, 48.85] } } })
+```
+
+## PostGIS features
+
+| Feature                                 | SQL             | Type                       |
+| --------------------------------------- | --------------- | -------------------------- |
+| `near` filter                           | `ST_DWithin`    | `Geography`                |
+| `within` filter                         | `ST_Within`     | `Geometry`                 |
+| `intersects` filter                     | `ST_Intersects` | `Geometry`                 |
+| `distanceFrom` orderBy                  | `ST_Distance`   | `Geography` / `Geometry`   |
+| GeoJSON ↔ EWKB round-trip              | —               | `Geometry` / `Geography`   |
+| Multi-SRID (4326, 3857, ...)            | —               | `@db.Geometry(type, srid)` |
+| `$queryRaw` returning `Prisma.Geometry` | —               | `Geometry`                 |
+
+## Compatibility
+
+Drop-in replacement for `@prisma/client`. All standard Prisma features (relations, transactions, middleware, extensions, etc.) work identically.
+
+Requires `@vertexa/prisma-adapter-pg` for PostGIS OID detection (converts `geometry` / `geography` columns to GeoJSON objects).
+
+## License
+
+Apache-2.0

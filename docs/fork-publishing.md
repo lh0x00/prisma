@@ -1,58 +1,63 @@
 # Forked Prisma — Publishing Guide
 
-Quy trình end-to-end để publish bản fork repo này lên npm dưới scope
-`@vertexa/*` (hoặc bất kỳ scope nào bạn cấu hình), bao gồm cả **Rust engines**
-(host trên GitHub Releases) và 3 **WASM packages**, sao cho người dùng chỉ cần
-`npm i @vertexa/prisma @vertexa/prisma-client` là dùng được code + engine
-của nhánh hiện tại không cần config thêm.
+End-to-end guide for publishing this fork to npm under the `@vertexa/*` scope,
+including **11 JS packages**, **3 WASM packages**, and **1 native binary**
+(`schema-engine`) hosted on GitHub Releases.
 
-> **Phạm vi**: scripts ở `scripts/fork/` rebrand 11 packages JS tối thiểu +
-> publish 3 WASM packages từ `prisma-engines/` + build & upload `schema-engine`
-> native cho 3 platforms phổ biến (`darwin-arm64`, `debian-openssl-3.0.x`,
-> `linux-musl-openssl-3.0.x`). Mọi package khác (`@prisma/internals`,
-> `@prisma/migrate`, `@prisma/client-generator-*`, `@prisma/dmmf`, …) đã
-> được esbuild bundle vào CLI/Client tại build-time, không cần publish riêng.
+After publishing, users only need `npm i @vertexa/prisma @vertexa/prisma-client`
+— no extra configuration required.
 
-## Mapping tên gốc → tên fork
+> **Current version**: `7.8.5` (based on Prisma 7.8)
+> **Scope**: `@vertexa` (override via `FORK_SCOPE=@your-scope`)
+> **GitHub repo**: `lh0x00/prisma` (override via `FORK_GH_REPO=your/repo`)
 
-### JS packages (rebrand + publish từ `packages/`)
+> **Pipeline scope**: scripts in `scripts/fork/` rebrand 11 JS packages +
+> publish 3 WASM packages from `prisma-engines/` + build & upload `schema-engine`
+> native for 3 platforms (`darwin-arm64`, `debian-openssl-3.0.x`,
+> `linux-musl-openssl-3.0.x`). All other packages (`@prisma/internals`,
+> `@prisma/migrate`, `@prisma/client-generator-*`, `@prisma/dmmf`, …) are
+> esbuild-bundled into the CLI/Client at build time and do not need separate publishing.
 
-| Folder dưới `packages/` | Tên gốc                               | Tên fork                              |
-| ----------------------- | ------------------------------------- | ------------------------------------- |
-| `debug`                 | `@prisma/debug`                       | `@vertexa/prisma-debug`                |
-| `driver-adapter-utils`  | `@prisma/driver-adapter-utils`        | `@vertexa/prisma-driver-adapter-utils` |
-| `adapter-pg`            | `@prisma/adapter-pg`                  | `@vertexa/prisma-adapter-pg`           |
-| `get-platform`          | `@prisma/get-platform`                | `@vertexa/prisma-get-platform`         |
-| `engines-version-fork`  | `@prisma/engines-version-fork` (stub) | `@vertexa/prisma-engines-version`      |
-| `fetch-engine`          | `@prisma/fetch-engine`                | `@vertexa/prisma-fetch-engine`         |
-| `engines`               | `@prisma/engines`                     | `@vertexa/prisma-engines`              |
-| `config`                | `@prisma/config`                      | `@vertexa/prisma-config`               |
-| `client-runtime-utils`  | `@prisma/client-runtime-utils`        | `@vertexa/prisma-client-runtime-utils` |
-| `client`                | `@prisma/client`                      | `@vertexa/prisma-client`               |
-| `cli`                   | `prisma`                              | `@vertexa/prisma`                      |
+## Name mapping: upstream → fork
 
-`packages/engines-version-fork/` là **stub mới** trong fork. `rebrand.ts` sẽ
-gán `prisma.enginesVersion` = commit hash của `prisma-engines/` HEAD (hoặc
-`FORK_ENGINES_COMMIT`) trước khi publish. Mọi dep `@prisma/engines-version`
-trong các package khác được tự động đổi sang `@vertexa/prisma-engines-version`.
+### JS packages (rebrand + publish from `packages/`)
 
-> **First-time setup**: commit thư mục `packages/engines-version-fork/` vào
-> nhánh fork của bạn (`git add packages/engines-version-fork && git commit`)
-> để `git restore` có baseline. Sau đó các lần rebrand tiếp theo sẽ được
-> revert sạch bởi `pnpm fork:restore`.
+| `packages/` folder     | Upstream name                         | Forked name                            |
+| ---------------------- | ------------------------------------- | -------------------------------------- |
+| `debug`                | `@prisma/debug`                       | `@vertexa/prisma-debug`                |
+| `driver-adapter-utils` | `@prisma/driver-adapter-utils`        | `@vertexa/prisma-driver-adapter-utils` |
+| `adapter-pg`           | `@prisma/adapter-pg`                  | `@vertexa/prisma-adapter-pg`           |
+| `get-platform`         | `@prisma/get-platform`                | `@vertexa/prisma-get-platform`         |
+| `engines-version-fork` | `@prisma/engines-version-fork` (stub) | `@vertexa/prisma-engines-version`      |
+| `fetch-engine`         | `@prisma/fetch-engine`                | `@vertexa/prisma-fetch-engine`         |
+| `engines`              | `@prisma/engines`                     | `@vertexa/prisma-engines`              |
+| `config`               | `@prisma/config`                      | `@vertexa/prisma-config`               |
+| `client-runtime-utils` | `@prisma/client-runtime-utils`        | `@vertexa/prisma-client-runtime-utils` |
+| `client`               | `@prisma/client`                      | `@vertexa/prisma-client`               |
+| `cli`                  | `prisma`                              | `@vertexa/prisma`                      |
 
-### WASM packages (build từ `prisma-engines/`, publish từ `<crate>/pkg/`)
+`packages/engines-version-fork/` is a **new stub** in the fork. `rebrand.ts`
+sets `prisma.enginesVersion` to the commit hash of `prisma-engines/` HEAD
+(or `FORK_ENGINES_COMMIT`) before publishing. All `@prisma/engines-version`
+deps in other packages are automatically rewritten to `@vertexa/prisma-engines-version`.
 
-| Cargo crate                          | Tên gốc                       | Tên fork                             |
-| ------------------------------------ | ----------------------------- | ------------------------------------ |
-| `prisma-schema-wasm`                 | `@prisma/prisma-schema-wasm`  | `@vertexa/prisma-schema-wasm`         |
+> **First-time setup**: commit the `packages/engines-version-fork/` directory
+> to your fork branch (`git add packages/engines-version-fork && git commit`)
+> so `git restore` has a baseline. Subsequent rebrand runs will be cleanly
+> reverted by `pnpm fork:restore`.
+
+### WASM packages (built from `prisma-engines/`, published from `<crate>/pkg/`)
+
+| Cargo crate                          | Upstream name                 | Forked name                           |
+| ------------------------------------ | ----------------------------- | ------------------------------------- |
+| `prisma-schema-wasm`                 | `@prisma/prisma-schema-wasm`  | `@vertexa/prisma-prisma-schema-wasm`  |
 | `schema-engine/schema-engine-wasm`   | `@prisma/schema-engine-wasm`  | `@vertexa/prisma-schema-engine-wasm`  |
 | `query-compiler/query-compiler-wasm` | `@prisma/query-compiler-wasm` | `@vertexa/prisma-query-compiler-wasm` |
 
-### Native engine binaries (build → host trên GitHub Releases)
+### Native engine binaries (build → host on GitHub Releases)
 
-Chỉ còn 1 binary native cần fork: **`schema-engine`** (Prisma 7 đã chuyển
-query work sang `query-compiler-wasm`). Default build 3 platforms:
+Only 1 native binary needs forking: **`schema-engine`** (Prisma 7 moved query
+work to `query-compiler-wasm`). Default build targets 3 platforms:
 
 | Slug                       | Builder                                        | Rust target                 |
 | -------------------------- | ---------------------------------------------- | --------------------------- |
@@ -60,190 +65,196 @@ query work sang `query-compiler-wasm`). Default build 3 platforms:
 | `debian-openssl-3.0.x`     | Docker (`Dockerfile.debian-openssl-3.0.x`)     | `x86_64-unknown-linux-gnu`  |
 | `linux-musl-openssl-3.0.x` | Docker (`Dockerfile.linux-musl-openssl-3.0.x`) | `x86_64-unknown-linux-musl` |
 
-Asset đẩy lên GitHub Release dưới tag `engines-<commit-hash>` với tên flat
-`<slug>__schema-engine.gz` + `<slug>__schema-engine.gz.sha256`.
+Assets are uploaded to a GitHub Release under tag `engines-<commit-hash>` with
+flat names `<slug>__schema-engine.gz` + `<slug>__schema-engine.gz.sha256`.
 
-`rebrand.ts` patch `packages/fetch-engine/src/utils.ts` để default URL trỏ
-về `https://github.com/<repo>/releases/download/engines-<hash>` với pattern
-`${baseUrl}/${binaryTarget}__${binaryName}${ext}`. User vẫn override được
-qua `PRISMA_ENGINES_MIRROR`.
+`rebrand.ts` patches `packages/fetch-engine/src/utils.ts` so the default URL
+points to `https://github.com/<repo>/releases/download/engines-<hash>` using
+the pattern `${baseUrl}/${binaryTarget}__${binaryName}${ext}`. Users can still
+override via `PRISMA_ENGINES_MIRROR`.
 
-Mapping này được khai báo trong `scripts/fork/fork.config.ts` — đổi `FORK_SCOPE`
-qua env var để dùng scope khác (ví dụ `FORK_SCOPE=@acme`).
+This mapping is declared in `scripts/fork/fork.config.ts` — change `FORK_SCOPE`
+via env var to use a different scope (e.g. `FORK_SCOPE=@acme`).
 
-## Yêu cầu trước khi publish
+## Prerequisites
 
-- `npm login --scope=@vertexa` (hoặc `NPM_TOKEN` qua `~/.npmrc`).
+- `npm login --scope=@vertexa` (or `NPM_TOKEN` in `~/.npmrc`).
 - Node `^20.19 || ^22.12 || >=24.0`, pnpm `>=10.15 <11`.
-- Docker daemon đang chạy (cho 2 platform Linux).
-- `gh` CLI: `brew install gh && gh auth login` — auth được vào `lh0x00/prisma`.
-- Disk trống ~5 GB (Rust target dirs + node_modules + Docker images).
-- Working tree dưới `packages/` clean (tránh mất sửa đổi local).
-- 1 lần đầu: `git add packages/engines-version-fork && git commit` để có baseline.
+- Docker daemon running (for the 2 Linux platforms).
+- `gh` CLI: `brew install gh && gh auth login` — authenticated to `lh0x00/prisma`.
+- ~5 GB free disk (Rust target dirs + node_modules + Docker images).
+- Clean working tree under `packages/` (to avoid losing local changes).
+- First time only: `git add packages/engines-version-fork && git commit` for baseline.
 
-## Cách dùng
+## Usage
 
-### Cách nhanh nhất — 1 lệnh end-to-end (full fork: JS + WASM + native)
+### Quickest — single command end-to-end (full fork: JS + WASM + native)
 
 ```bash
-FORK_VERSION=7.8.0 pnpm fork:release
+FORK_VERSION=7.8.5 pnpm fork:release
 ```
 
-Pipeline (theo đúng thứ tự):
+Pipeline (in order):
 
 1. `fork:install` → `pnpm install`
-2. `fork:patch-source` → **pre-build** patches: rewrite `fetch-engine/src/utils.ts` (default URL → GitHub Release flat-asset) + stamp `engines-version-fork/package.json#prisma.enginesVersion` từ `prisma-engines/` HEAD
-3. `fork:build` → `pnpm build` (turbo build với patches đã apply, devDeps chain còn nguyên)
-4. `fork:rebrand` → **post-build** rebrand: rename `name` của 9 packages, rewrite bundle output, drop `devDependencies`, drop dangerous lifecycle scripts
-5. `fork:engines:build:wasm` → Docker build 3 WASM crates (5 providers × 2 modes cho query-compiler)
-6. `fork:engines:build:native` → build `schema-engine` cho 3 platforms (host + Docker)
-7. `fork:engines:upload` → `gh release upload` lên tag `engines-<hash>`
+2. `fork:patch-source` → **pre-build** patches: rewrite `fetch-engine/src/utils.ts` (default URL → GitHub Release flat-asset) + stamp `engines-version-fork/package.json#prisma.enginesVersion` from `prisma-engines/` HEAD
+3. `fork:build` → `pnpm build` (turbo build with patches applied, devDeps chain intact)
+4. `fork:rebrand` → **post-build** rebrand: rename `name` of 11 packages, rewrite bundle output, drop `devDependencies`, drop dangerous lifecycle scripts
+5. `fork:engines:build:wasm` → Docker build 3 WASM crates (5 providers × 2 modes for query-compiler)
+6. `fork:engines:build:native` → build `schema-engine` for 3 platforms (host + Docker)
+7. `fork:engines:upload` → `gh release upload` to tag `engines-<hash>`
 8. `fork:engines:publish:wasm` → rename + `npm publish` 3 WASM packages
-9. `fork:publish` → `npm publish --ignore-scripts` 9 JS packages theo topo
-10. `fork:restore` → revert mọi thay đổi local (git restore tracked + reset stub `enginesVersion`)
+9. `fork:publish` → `npm publish --ignore-scripts` 11 JS packages in topo order
+10. `fork:restore` → revert all local changes (git restore tracked + reset stub `enginesVersion`)
 
-> **Tại sao tách `patch-source` ↔ `rebrand`**: Nếu `rebrand` chạy trước build, nó sẽ xóa `devDependencies` của `@vertexa/prisma-client`, làm Turborepo mất signal về dep chain `client → internals → get-dmmf` (chain qua devDeps). Hệ quả: turbo schedule song song → race condition, build fail với `Could not resolve "@prisma/get-dmmf"`. Vì vậy `rebrand` phải chạy SAU build.
+> **Why split `patch-source` ↔ `rebrand`**: If `rebrand` runs before build, it
+> strips `devDependencies` from `@vertexa/prisma-client`, causing Turborepo to
+> lose the dep chain signal `client → internals → get-dmmf` (chained via devDeps).
+> Result: turbo schedules in parallel → race condition → build fails with
+> `Could not resolve "@prisma/get-dmmf"`. Therefore `rebrand` must run **after** build.
 
-### Dry-run (an toàn — không động vào npm/Docker/GitHub)
+### Dry-run (safe — no npm/Docker/GitHub side effects)
 
 ```bash
-FORK_VERSION=7.8.0 pnpm fork:release:dry
+FORK_VERSION=7.8.5 pnpm fork:release:dry
 ```
 
-Mọi `npm publish`, `docker build`, `docker run`, `gh release upload` đều
-được in ra console nhưng không thực thi.
+All `npm publish`, `docker build`, `docker run`, `gh release upload` commands
+are printed to console but not executed.
 
-### Chỉ JS layer (không fork engines, dùng CDN Prisma upstream)
+### JS-only (skip engines, use upstream Prisma CDN)
 
 ```bash
-FORK_VERSION=7.8.0 pnpm fork:release:js-only
+FORK_VERSION=7.8.5 pnpm fork:release:js-only
 ```
 
-Bỏ qua bước build/upload engines + WASM publish. User cài fork sẽ tải Rust
-binaries từ `binaries.prisma.sh` của Prisma upstream (lưu ý: muốn vậy phải
-**không** chạy `fork:rebrand` patch fetch-engine — xem note ở dưới).
+Skips engine build/upload + WASM publish. Users installing the fork will fetch
+Rust binaries from `binaries.prisma.sh` (upstream Prisma). Note: to use this
+mode, you must **not** run the `fork:rebrand` fetch-engine patch — see note above.
 
-### Chạy từng bước
+### Step-by-step
 
 ```bash
-# 0. Cài deps (1 lần)
+# 0. Install deps (once)
 pnpm install
 
 # 1. Pre-build source patches (fetch-engine URL + engines-version stub)
-FORK_VERSION=7.8.0 pnpm fork:patch-source
+FORK_VERSION=7.8.5 pnpm fork:patch-source
 
-# 2. Build JS bundles (turbo) với patches đã apply
+# 2. Build JS bundles (turbo) with patches applied
 pnpm fork:build
 
 # 3. Post-build rebrand (rename package.json + rewrite bundle output)
-FORK_VERSION=7.8.0 pnpm fork:rebrand
+FORK_VERSION=7.8.5 pnpm fork:rebrand
 
-# 4. Build + upload Rust engines (~30-60 phút lần đầu)
-FORK_VERSION=7.8.0 pnpm fork:engines:build:wasm
-FORK_VERSION=7.8.0 pnpm fork:engines:build:native
-FORK_VERSION=7.8.0 pnpm fork:engines:upload
-FORK_VERSION=7.8.0 pnpm fork:engines:publish:wasm
+# 4. Build + upload Rust engines (~30-60 min first time)
+FORK_VERSION=7.8.5 pnpm fork:engines:build:wasm
+FORK_VERSION=7.8.5 pnpm fork:engines:build:native
+FORK_VERSION=7.8.5 pnpm fork:engines:upload
+FORK_VERSION=7.8.5 pnpm fork:engines:publish:wasm
 
-# 5. Verify trước khi đẩy JS lên npm
+# 5. Verify before pushing JS to npm
 pnpm fork:publish:dry
 
-# 6. Publish thật
-pnpm fork:publish              # hoặc: pnpm fork:publish --tag next
+# 6. Publish for real
+pnpm fork:publish              # or: pnpm fork:publish --tag next
 
-# 7. Khôi phục source
+# 7. Restore source
 pnpm fork:restore
 ```
 
-### Publish chỉ 1 package (debug nhanh)
+### Publish a single package (quick debug)
 
 ```bash
-FORK_VERSION=7.8.0 pnpm fork:rebrand
+FORK_VERSION=7.8.5 pnpm fork:rebrand
 FORK_ONLY=prisma-debug pnpm fork:publish:dry
 ```
 
-### Build chỉ 1 platform / 1 WASM crate
+### Build a single platform / WASM crate
 
 ```bash
-# Native: chỉ darwin-arm64 (skip Docker)
+# Native: only darwin-arm64 (skip Docker)
 pnpm fork:engines:build:native --only darwin-arm64
 
-# WASM: chỉ schema-engine-wasm
-FORK_VERSION=7.8.0 pnpm fork:engines:build:wasm --only prisma-schema-engine-wasm
+# WASM: only schema-engine-wasm
+FORK_VERSION=7.8.5 pnpm fork:engines:build:wasm --only prisma-schema-engine-wasm
 ```
 
-## Tham số cấu hình (env / flags)
+## Configuration (env / flags)
 
-| Env                   | Flag         | Default                                                      | Mô tả                                                            |
-| --------------------- | ------------ | ------------------------------------------------------------ | ---------------------------------------------------------------- |
-| `FORK_VERSION`        | `--version`  | (bắt buộc)                                                   | Phiên bản semver gán cho mọi package fork                        |
-| `FORK_SCOPE`          | `--scope`    | `@vertexa`                                                    | Scope npm                                                        |
-| `FORK_TAG`            | `--tag`      | `latest`                                                     | dist-tag truyền cho `npm publish`                                |
-| `FORK_DRY_RUN`        | `--dry-run`  | `false`                                                      | Bật dry-run cho mọi script                                       |
-| `FORK_ONLY`           | `--only`     | (tất cả)                                                     | Chỉ publish slug được liệt kê (vd `prisma-debug,prisma-engines`) |
-| `FORK_OTP`            | `--otp`      | —                                                            | Forward OTP cho 2FA                                              |
-| `FORK_REGISTRY`       | `--registry` | —                                                            | Forward registry URL                                             |
-| `FORK_GH_REPO`        | `--repo`     | `lh0x00/prisma`                                              | GitHub repo nhận engine binaries                                 |
-| `FORK_ENGINES_COMMIT` | `--commit`   | `git -C prisma-engines rev-parse HEAD`                       | Commit hash cho engines-version + release tag                    |
-| `FORK_ENGINE_TARGETS` | —            | `darwin-arm64,debian-openssl-3.0.x,linux-musl-openssl-3.0.x` | Comma list platforms để build native                             |
-| `FORK_WASM_BUILDER`   | `--builder`  | `docker`                                                     | `host` hoặc `docker`                                             |
-| `WASM_BUILD_PROFILE`  | `--profile`  | `release`                                                    | Cargo profile khi build WASM                                     |
+| Env                   | Flag         | Default                                                      | Description                                                    |
+| --------------------- | ------------ | ------------------------------------------------------------ | -------------------------------------------------------------- |
+| `FORK_VERSION`        | `--version`  | (required)                                                   | Semver version assigned to all forked packages                 |
+| `FORK_SCOPE`          | `--scope`    | `@vertexa`                                                   | npm scope                                                      |
+| `FORK_TAG`            | `--tag`      | `latest`                                                     | dist-tag passed to `npm publish`                               |
+| `FORK_DRY_RUN`        | `--dry-run`  | `false`                                                      | Enable dry-run for all scripts                                 |
+| `FORK_ONLY`           | `--only`     | (all)                                                        | Only publish listed slugs (e.g. `prisma-debug,prisma-engines`) |
+| `FORK_OTP`            | `--otp`      | —                                                            | Forward OTP for 2FA                                            |
+| `FORK_REGISTRY`       | `--registry` | —                                                            | Forward registry URL                                           |
+| `FORK_GH_REPO`        | `--repo`     | `lh0x00/prisma`                                              | GitHub repo hosting engine binaries                            |
+| `FORK_ENGINES_COMMIT` | `--commit`   | `git -C prisma-engines rev-parse HEAD`                       | Commit hash for engines-version + release tag                  |
+| `FORK_ENGINE_TARGETS` | —            | `darwin-arm64,debian-openssl-3.0.x,linux-musl-openssl-3.0.x` | Comma-separated platforms for native build                     |
+| `FORK_WASM_BUILDER`   | `--builder`  | `docker`                                                     | `host` or `docker`                                             |
+| `WASM_BUILD_PROFILE`  | `--profile`  | `release`                                                    | Cargo profile for WASM build                                   |
 
-## Người dùng cuối dùng fork ra sao
+## How end users consume the fork
 
 ```bash
 npm i -D @vertexa/prisma
 npm i    @vertexa/prisma-client
 ```
 
-Generator output (`prisma generate`) sẽ tự `require('@vertexa/prisma-client/runtime/library')`
-vì các bundle output đã được rewrite — đây là lý do bước `fork:rebrand`
-phải chạy **sau** `fork:build`.
+The generator output (`prisma generate`) will automatically
+`require('@vertexa/prisma-client/runtime/library')` because the bundle output
+has been rewritten — this is why `fork:rebrand` must run **after** `fork:build`.
 
-## Cách script hoạt động (tóm tắt)
+## How the scripts work (summary)
 
-`scripts/fork/rebrand.ts` thực hiện đúng 2 việc cho mỗi package trong tập 8:
+`scripts/fork/rebrand.ts` does exactly 2 things for each of the 11 packages:
 
 1. **Patch `package.json`**:
-   - đổi `name` → tên fork.
-   - đặt `version` = `FORK_VERSION`.
-   - đổi key của `dependencies` / `peerDependencies` /
-     `optionalDependencies` / `peerDependenciesMeta` cho các tên có trong
-     mapping; thay `workspace:*` của các fork-deps thành `^FORK_VERSION`.
-   - **xoá** `devDependencies` (chứa nhiều `workspace:*` không thể publish và
-     `npm install` không cần — toàn bộ generator/internals đã bundle).
-   - xoá script lifecycle nguy hiểm (`prepublishOnly`, `prepare`, `prepack`,
-     `postpublish`) tránh re-trigger build trong lúc `npm publish`.
-   - đảm bảo `publishConfig.access = "public"`.
+   - Rename `name` → forked name.
+   - Set `version` = `FORK_VERSION`.
+   - Rewrite keys in `dependencies` / `peerDependencies` /
+     `optionalDependencies` / `peerDependenciesMeta` for names in the mapping;
+     replace `workspace:*` of fork-deps with `^FORK_VERSION`.
+   - **Delete** `devDependencies` (contains `workspace:*` entries that can't be
+     published and aren't needed for `npm install` — all generator/internals
+     are bundled).
+   - Delete dangerous lifecycle scripts (`prepublishOnly`, `prepare`, `prepack`,
+     `postpublish`) to prevent re-triggering builds during `npm publish`.
+   - Ensure `publishConfig.access = "public"`.
 
 2. **Rewrite bundle output**:
-   - đi qua `build/`, `dist/`, `runtime/`, `generator-build/`, `prisma-client/`,
+   - Walk `build/`, `dist/`, `runtime/`, `generator-build/`, `prisma-client/`,
      `install/`, `preinstall/`, `download/`, `scripts/`, …
-   - thay literal string `@prisma/client`, `@prisma/engines`, `prisma`, …
-     (giới hạn ở các vị trí có ranh giới `"`/`'`/`` ` ``/`/` để tránh động
-     vào tên biến random) thành tên fork tương ứng.
-   - bỏ qua `package.json` (đã handle ở bước 1) để tránh double-encoding.
+   - Replace literal strings `@prisma/client`, `@prisma/engines`, `prisma`, …
+     (limited to positions bounded by `"`/`'`/`` ` ``/`/` to avoid touching
+     random variable names) with the corresponding forked name.
+   - Skip `package.json` (already handled in step 1) to avoid double-encoding.
 
-`scripts/fork/publish-fork.ts` chạy `npm publish --ignore-scripts` từng package
-theo thứ tự topo `debug → driver-adapter-utils → adapter-pg → get-platform →
-engines-version → fetch-engine → engines → config → client-runtime-utils →
-client → cli`.
+`scripts/fork/publish-fork.ts` runs `npm publish --ignore-scripts` for each
+package in topological order: `debug → driver-adapter-utils → adapter-pg →
+get-platform → engines-version → fetch-engine → engines → config →
+client-runtime-utils → client → cli`.
 
-## Khi nào cần đụng vào script
+## When to modify the scripts
 
-- Muốn publish thêm 1 package phụ (vd `@prisma/instrumentation`):
-  thêm entry vào `FORK_PACKAGES` trong `scripts/fork/fork.config.ts`. Đặt
-  vào đúng vị trí topo (sau các package mà nó depend tới).
-- Muốn đổi scope: set `FORK_SCOPE=@your-scope` (không cần sửa code).
-- Muốn 1 vài package giữ tên gốc: bỏ entry tương ứng khỏi `FORK_PACKAGES`.
+- To publish an additional package (e.g. `@prisma/instrumentation`):
+  add an entry to `FORK_PACKAGES` in `scripts/fork/fork.config.ts`. Place it
+  at the correct topological position (after packages it depends on).
+- To change scope: set `FORK_SCOPE=@your-scope` (no code changes needed).
+- To keep certain packages under their original names: remove the
+  corresponding entry from `FORK_PACKAGES`.
 
-## Khắc phục sự cố
+## Troubleshooting
 
-- `Working tree is dirty under packages/`: chạy `pnpm fork:restore` hoặc
-  commit/stash các thay đổi local trước.
-- `npm publish` báo `403 Forbidden`: kiểm tra `npm whoami`, đảm bảo scope
-  `@vertexa` thuộc account của bạn (hoặc tổ chức bạn có quyền).
-- `npm publish` báo `cannot publish over previously published version`:
-  bump `FORK_VERSION` (ví dụ `7.8.1`).
-- Engine không tải được khi user cài fork: kiểm tra rằng `@prisma/engines-version`
-  trong `packages/engines/package.json` của fork vẫn trỏ tới một version
-  hợp lệ trên npm — đây là source-of-truth cho URL Rust binaries.
+- `Working tree is dirty under packages/`: run `pnpm fork:restore` or
+  commit/stash local changes first.
+- `npm publish` returns `403 Forbidden`: check `npm whoami`, ensure the
+  `@vertexa` scope belongs to your account (or org you have access to).
+- `npm publish` returns `cannot publish over previously published version`:
+  bump `FORK_VERSION` (e.g. `7.8.6`).
+- Engine download fails for users: verify that `@prisma/engines-version` in
+  `packages/engines/package.json` of the fork still points to a valid version
+  on npm — this is the source-of-truth for the Rust binary download URL.

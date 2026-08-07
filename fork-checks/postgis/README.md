@@ -1,84 +1,49 @@
-# `@vertexa/prisma` PostGIS smoke test
+# @vertexa/prisma — PostGIS smoke test
 
-Tiny standalone project to verify the **published** `@vertexa/*@7.8.0` fork
-exposes the new geometry/PostGIS surface end-to-end against a real Postgres
-+ PostGIS instance.
+Standalone project verifying the **published** `@vertexa/*@7.8.5` fork exposes
+PostGIS / Geometry features end-to-end against a real Postgres + PostGIS instance.
 
 ## What gets checked
 
-`src/index.ts` runs each check sequentially (every check truncates the tables
-first) and prints `PASS` / `FAIL`:
+`src/index.ts` runs 14 checks sequentially (tables are truncated between each)
+and prints `PASS` / `FAIL`:
 
-- Point / LineString / Polygon round-trip (including a Polygon with a hole)
-- `near` filter — `ST_DWithin` over the `geography` projection
-- `within` filter — `ST_Within` against an inline polygon
-- `intersects` filter — `ST_Intersects` against inline GeoJSON
-- `distanceFrom` orderBy, both `asc` and `desc` — `ST_Distance`
-- Combined `where + orderBy + take + select`
-- `NOT` filter excluding a geo match
-- `null` geometry round-trip
-- Custom SRID 3857 (Web Mercator) storage + filter
-- `$queryRawUnsafe` with `ST_AsText(ST_GeomFromText(...))`
-- `$queryRaw` returning a typed `Prisma.Geometry` column
-
-## Dependencies
-
-The rebrand pipeline publishes 11 packages including
-`@vertexa/prisma-adapter-pg` and `@vertexa/prisma-driver-adapter-utils`,
-which ship the runtime bits that auto-detect PostGIS OIDs
-(`geometry` / `geography` → GeoJSON objects).
-
-`package.json` pulls them straight from npm:
-
-```jsonc
-"@vertexa/prisma-adapter-pg": "7.8.0",
-"@vertexa/prisma-driver-adapter-utils": "7.8.0",
-"pnpm": {
-  "overrides": {
-    "@prisma/debug": "npm:@vertexa/prisma-debug@7.8.0"
-  }
-}
-```
+| #   | Check                                                    | SQL function    |
+| --- | -------------------------------------------------------- | --------------- |
+| 1   | Point round-trip (insert → findUnique → update)          | —               |
+| 2   | LineString round-trip                                    | —               |
+| 3   | Polygon with hole (interior ring)                        | —               |
+| 4   | `near` filter returns only Paris                         | `ST_DWithin`    |
+| 5   | `within` filter selects centroids inside a square        | `ST_Within`     |
+| 6   | `intersects` filter against inline GeoJSON polygon       | `ST_Intersects` |
+| 7   | `distanceFrom` orderBy ascending                         | `ST_Distance`   |
+| 8   | `distanceFrom` orderBy descending                        | `ST_Distance`   |
+| 9   | Combined `where + orderBy + take + select`               | —               |
+| 10  | `NOT` filter excludes geo matches                        | —               |
+| 11  | `null` geometry round-trip                               | —               |
+| 12  | SRID 3857 (Web Mercator) storage + `near` filter         | `ST_DWithin`    |
+| 13  | `$queryRawUnsafe` with `ST_AsText(ST_GeomFromText(...))` | —               |
+| 14  | `$queryRaw` returning typed `Prisma.Geometry` column     | —               |
 
 ## Setup
 
-1. Copy the env file:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-2. Start Postgres + PostGIS via the bundled docker compose:
-
-   ```bash
-   pnpm db:up
-   # wait ~5–10s for the healthcheck to pass
-   ```
-
-   `docker/postgis-test.yml` runs `postgis/postgis:15-3.3` on port `5433`
-   with the `postgis` extension preinstalled in the default `tests` DB.
-
-3. Install dependencies (outside the parent repo's pnpm workspace):
-
-   ```bash
-   pnpm install --ignore-workspace
-   ```
+```bash
+cp .env.example .env          # POSTGIS_URL=localhost:5433
+pnpm db:up                    # docker compose: postgis/postgis:15-3.3 on :5433
+pnpm install --ignore-workspace
+```
 
 ## Run
 
 ```bash
-pnpm generate    # runs `@vertexa/prisma generate` from schema.prisma
-pnpm db:push     # pushes the schema (already passes --force-reset)
-pnpm check       # runs tsx src/index.ts
+pnpm all        # install + db:up + generate + db:push + check
+# or step-by-step:
+pnpm generate   # @vertexa/prisma generate
+pnpm db:push    # prisma db push --force-reset --skip-generate
+pnpm check      # tsx src/index.ts
 ```
 
-Or in one shot end-to-end:
-
-```bash
-pnpm all
-```
-
-Expected output (one line per check, summary at the bottom):
+Expected output:
 
 ```
 PostGIS detected: v3.3.x

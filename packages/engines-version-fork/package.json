@@ -1,7 +1,16 @@
 {
   "name": "@vertexa/prisma-engines-version",
   "version": "7.8.0",
-  "description": "Forked counterpart of @prisma/engines-version. The actual commit hash is filled in by `scripts/fork/rebrand.ts` before publishing.",
+  "description": "Fork of @prisma/engines-version — stamps the Prisma engine commit hash for the @vertexa/* fork. Internal package, do not depend on it directly.",
+  "keywords": [
+    "Prisma",
+    "engines",
+    "version",
+    "commit",
+    "internal",
+    "fork",
+    "vertexa"
+  ],
   "main": "index.js",
   "types": "index.d.ts",
   "license": "Apache-2.0",

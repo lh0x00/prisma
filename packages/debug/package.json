@@ -1,7 +1,16 @@
 {
   "name": "@prisma/debug",
   "version": "0.0.0",
-  "description": "This package is intended for Prisma's internal use",
+  "description": "Fork of @prisma/debug — cached debug logger for Prisma internals. Internal package consumed by @vertexa/* packages.",
+  "keywords": [
+    "Prisma",
+    "debug",
+    "logging",
+    "logger",
+    "internal",
+    "fork",
+    "vertexa"
+  ],
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",

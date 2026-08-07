@@ -1,7 +1,18 @@
 {
   "name": "@prisma/get-platform",
   "version": "0.0.0",
-  "description": "This package is intended for Prisma's internal use",
+  "description": "Fork of @prisma/get-platform — platform detection for Prisma engine binaries (darwin, debian, linux-musl, etc.). Internal package.",
+  "keywords": [
+    "Prisma",
+    "platform",
+    "detection",
+    "binary-target",
+    "os",
+    "arch",
+    "internal",
+    "fork",
+    "vertexa"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "license": "Apache-2.0",

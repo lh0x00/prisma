@@ -1,86 +1,135 @@
-<div align="center">
-  <h1>Prisma</h1>
-  <a href="https://www.npmjs.com/package/prisma"><img src="https://img.shields.io/npm/v/prisma.svg?style=flat" /></a>
-  <a href="https://github.com/prisma/prisma/blob/main/CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" /></a>
-  <a href="https://github.com/prisma/prisma/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache%202-blue" /></a>
-  <a href="https://pris.ly/discord"><img alt="Discord" src="https://img.shields.io/discord/937751382725886062?label=Discord"></a>
-  <br />
-  <br />
-  <a href="https://www.prisma.io/docs/getting-started/prisma-orm/quickstart/prisma-postgres">Quickstart</a>
-  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://www.prisma.io/">Website</a>
-  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://www.prisma.io/docs/">Docs</a>
-  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://github.com/prisma/prisma-examples/">Examples</a>
-  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://www.prisma.io/blog">Blog</a>
-  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://pris.ly/discord">Discord</a>
-  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://twitter.com/prisma">Twitter</a>
-  <br />
-  <hr />
-</div>
+# @vertexa/prisma
 
-## What is Prisma?
+Fork of [Prisma ORM](https://github.com/prisma/prisma) with **PostGIS / Geometry support** for PostgreSQL.
 
-Prisma is a **next-generation ORM** that consists of these tools:
+## What is this?
 
-- [**Prisma Client**](https://www.prisma.io/docs/concepts/components/prisma-client): Auto-generated and type-safe query builder for Node.js & TypeScript
-- [**Prisma Migrate**](https://www.prisma.io/docs/concepts/components/prisma-migrate): Declarative data modeling & migration system
-- [**Prisma Studio**](https://github.com/prisma/studio): GUI to view and edit data in your database
+This is a rebranded fork of Prisma ORM v7.8, published under the `@vertexa` npm scope. The fork adds native PostGIS support — schema-level `Geometry` / `Geography` scalar types, query filters (`near`, `within`, `intersects`), and GeoJSON ↔ EWKB serialization — on top of the standard Prisma feature set.
 
-Prisma Client can be used in _any_ Node.js or TypeScript backend application (including serverless applications and microservices). This can be a [REST API](https://www.prisma.io/docs/concepts/overview/prisma-in-your-stack/rest), a [GraphQL API](https://www.prisma.io/docs/concepts/overview/prisma-in-your-stack/graphql) a gRPC API, or anything else that needs a database.
+Everything else works the same as upstream Prisma. If you know Prisma, you know this fork.
 
-**If you need a database to use with Prisma ORM, check out [Prisma Postgres](https://www.prisma.io/docs/getting-started/prisma-orm/quickstart/prisma-postgres?utm_source=npm&utm_medium=readme) or if you are looking for our MCP Server, head [here](https://github.com/prisma/mcp).**
+## Install
 
-## Getting started
+```bash
+npm install @vertexa/prisma @vertexa/prisma-client
+```
 
-The fastest way to get started with Prisma is by following the [**Quickstart (5 min)**](https://pris.ly/quickstart).
+With pnpm, add an override so internal deps resolve to the fork:
 
-The Quickstart is based on a preconfigured SQLite database. You can also get started with your own database (PostgreSQL and MySQL) by following one of these guides:
+```jsonc
+{
+  "pnpm": {
+    "overrides": {
+      "@prisma/debug": "npm:@vertexa/prisma-debug@7.8.5",
+    },
+  },
+}
+```
 
-- [Add Prisma to an existing project](https://www.prisma.io/docs/getting-started/prisma-orm/add-to-existing-project/postgresql)
-- [Set up a new project with Prisma from scratch](https://www.prisma.io/docs/getting-started/setup-prisma/start-from-scratch/relational-databases-typescript-postgresql)
+## Usage
 
-## Community
+```bash
+npx @vertexa/prisma generate
+npx @vertexa/prisma db push
+npx @vertexa/prisma migrate dev
+```
 
-Prisma has a large and supportive [community](https://www.prisma.io/community) of enthusiastic application developers. You can join us on [Discord](https://pris.ly/discord) and here on [GitHub](https://github.com/prisma/prisma/discussions).
+### PostGIS schema
 
-## Security
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
 
-If you have a security issue to report, please contact us at [security@prisma.io](mailto:security@prisma.io?subject=[GitHub]%20Prisma%202%20Security%20Report%20).
+datasource db {
+  provider = "postgresql"
+}
 
-## Support
+model Location {
+  id       Int        @id @default(autoincrement())
+  name     String
+  position Geography? @db.Geography(Point, 4326)
+}
 
-### Ask a question about Prisma
+model Area {
+  id       Int       @id @default(autoincrement())
+  name     String
+  boundary Geometry? @db.Geometry(Polygon, 4326)
+}
+```
 
-You can ask questions and initiate [discussions](https://github.com/prisma/prisma/discussions/) about Prisma-related topics in the `prisma` repository on GitHub.
+### PostGIS queries
 
-👉 [**Ask a question**](https://github.com/prisma/prisma/discussions/new)
+```typescript
+import { PrismaClient } from '@vertexa/prisma-client'
+import { PrismaPg } from '@vertexa/prisma-adapter-pg'
+import { Pool } from 'pg'
 
-### Create a bug report for Prisma
+const prisma = new PrismaClient({ adapter: new PrismaPg(new Pool({ connectionString: process.env.DATABASE_URL })) })
 
-If you see an error message or run into an issue, please make sure to create a bug report! You can find [best practices for creating bug reports](https://www.prisma.io/docs/guides/other/troubleshooting-orm/creating-bug-reports) (like including additional debugging output) in the docs.
+// near → ST_DWithin
+await prisma.location.findMany({
+  where: { position: { near: { point: [2.35, 48.85], distance: 1000 } } },
+})
 
-👉 [**Create bug report**](https://pris.ly/prisma-prisma-bug-report)
+// intersects → ST_Intersects
+await prisma.area.findMany({
+  where: {
+    boundary: {
+      intersects: {
+        geometry: {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [1, 1],
+              [1, 3],
+              [3, 3],
+              [3, 1],
+              [1, 1],
+            ],
+          ],
+        },
+      },
+    },
+  },
+})
 
-### Submit a feature request
+// orderBy distanceFrom → ST_Distance
+await prisma.location.findMany({ orderBy: { position: { distanceFrom: [2.35, 48.85] } } })
+```
 
-If Prisma currently doesn't have a certain feature, be sure to check out the [roadmap](https://www.prisma.io/docs/more/roadmap) to see if this is already planned for the future.
+## PostGIS features
 
-If the feature on the roadmap is linked to a GitHub issue, please make sure to leave a +1 on the issue and ideally a comment with your thoughts about the feature!
+| Feature                      | SQL             | Schema type                |
+| ---------------------------- | --------------- | -------------------------- |
+| `near` filter                | `ST_DWithin`    | `Geography`                |
+| `within` filter              | `ST_Within`     | `Geometry`                 |
+| `intersects` filter          | `ST_Intersects` | `Geometry`                 |
+| `distanceFrom` orderBy       | `ST_Distance`   | `Geography` / `Geometry`   |
+| GeoJSON ↔ EWKB round-trip   | —               | `Geometry` / `Geography`   |
+| Multi-SRID (4326, 3857, ...) | —               | `@db.Geometry(type, srid)` |
 
-👉 [**Submit feature request**](https://github.com/prisma/prisma/issues/new?assignees=&labels=&template=feature_request.md&title=)
+## Packages
 
-## Contributing
+This CLI is part of a fork that publishes these packages under `@vertexa/*`:
 
-Refer to our [contribution guidelines](https://github.com/prisma/prisma/blob/main/CONTRIBUTING.md) and [Code of Conduct for contributors](https://github.com/prisma/prisma/blob/main/CODE_OF_CONDUCT.md).
+| Package                                | Replaces                       |
+| -------------------------------------- | ------------------------------ |
+| `@vertexa/prisma`                      | `prisma`                       |
+| `@vertexa/prisma-client`               | `@prisma/client`               |
+| `@vertexa/prisma-adapter-pg`           | `@prisma/adapter-pg`           |
+| `@vertexa/prisma-config`               | `@prisma/config`               |
+| `@vertexa/prisma-driver-adapter-utils` | `@prisma/driver-adapter-utils` |
+| `@vertexa/prisma-debug`                | `@prisma/debug`                |
+| `@vertexa/prisma-engines`              | `@prisma/engines`              |
+| `@vertexa/prisma-engines-version`      | `@prisma/engines-version`      |
+| `@vertexa/prisma-fetch-engine`         | `@prisma/fetch-engine`         |
+| `@vertexa/prisma-get-platform`         | `@prisma/get-platform`         |
+| `@vertexa/prisma-client-runtime-utils` | `@prisma/client-runtime-utils` |
+| `@vertexa/prisma-query-compiler-wasm`  | `@prisma/query-compiler-wasm`  |
+| `@vertexa/prisma-schema-engine-wasm`   | `@prisma/schema-engine-wasm`   |
+| `@vertexa/prisma-prisma-schema-wasm`   | `@prisma/prisma-schema-wasm`   |
 
-## Tests Status
+## License
 
-- Prisma Tests Status:  
-  [![CI](https://github.com/prisma/prisma/actions/workflows/test.yml/badge.svg)](https://github.com/prisma/prisma/actions/workflows/test.yml)
-- Ecosystem Tests Status:  
-  [![Actions Status](https://github.com/prisma/ecosystem-tests/workflows/test/badge.svg)](https://github.com/prisma/ecosystem-tests/actions)
+Apache-2.0
