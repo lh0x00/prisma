@@ -86,6 +86,7 @@ export type MappedError =
   | {
       kind: 'UniqueConstraintViolation'
       constraint?: { fields: string[] } | { index: string } | { foreignKey: {} }
+      table?: string
     }
   | {
       kind: 'NullConstraintViolation'
@@ -93,6 +94,10 @@ export type MappedError =
     }
   | {
       kind: 'ForeignKeyConstraintViolation'
+      constraint?: { fields: string[] } | { index: string } | { foreignKey: {} }
+    }
+  | {
+      kind: 'RestrictViolation'
       constraint?: { fields: string[] } | { index: string } | { foreignKey: {} }
     }
   | {

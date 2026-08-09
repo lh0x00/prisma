@@ -4,6 +4,9 @@ import { pipeline } from 'node:stream/promises'
 
 import { runtime } from 'std-env'
 
+/** Must remain the IPv4 loopback host used by Studio's listener and port probing. */
+export const STUDIO_SERVER_HOST = '127.0.0.1'
+
 export type StudioRequestHandler = (request: Request) => Promise<Response> | Response
 
 export interface StudioServer {
@@ -13,6 +16,7 @@ export interface StudioServer {
 type StartStudioServerOptions = {
   handler: StudioRequestHandler
   onListen(): void
+  onNodeRequestSettled?(): void
   port: number
 }
 
@@ -29,13 +33,22 @@ export function startStudioServer(options: StartStudioServerOptions): StudioServ
   }
 }
 
-function startNodeStudioServer({ handler, onListen, port }: StartStudioServerOptions): StudioServer {
+function startNodeStudioServer({
+  handler,
+  onListen,
+  onNodeRequestSettled,
+  port,
+}: StartStudioServerOptions): StudioServer {
   const server = createServer(async (nodeRequest, nodeResponse) => {
     try {
-      const request = createNodeRequest(nodeRequest, port)
+      const request = createNodeRequest(nodeRequest, nodeResponse, port)
       const response = await handler(request)
       await writeNodeResponse(nodeResponse, response, nodeRequest.method)
     } catch (error) {
+      if (nodeResponse.destroyed) {
+        return
+      }
+
       console.error('[Prisma Studio]', error)
 
       if (nodeResponse.headersSent || nodeResponse.writableEnded) {
@@ -44,12 +57,13 @@ function startNodeStudioServer({ handler, onListen, port }: StartStudioServerOpt
       }
 
       nodeResponse.statusCode = 500
-      nodeResponse.setHeader('Access-Control-Allow-Origin', '*')
       nodeResponse.end(error instanceof Error ? error.message : 'Internal Server Error')
+    } finally {
+      onNodeRequestSettled?.()
     }
   })
 
-  server.listen(port, onListen)
+  server.listen(port, STUDIO_SERVER_HOST, onListen)
 
   return {
     close() {
@@ -58,10 +72,17 @@ function startNodeStudioServer({ handler, onListen, port }: StartStudioServerOpt
   }
 }
 
-function createNodeRequest(nodeRequest: IncomingMessage, port: number): Request {
+function createNodeRequest(nodeRequest: IncomingMessage, nodeResponse: ServerResponse, port: number): Request {
   const origin = `http://${nodeRequest.headers.host ?? `localhost:${port}`}`
   const url = new URL(nodeRequest.url ?? '/', origin)
   const headers = new Headers()
+  const abortController = new AbortController()
+
+  nodeResponse.once('close', () => {
+    if (!nodeResponse.writableEnded) {
+      abortController.abort()
+    }
+  })
 
   for (const [key, value] of Object.entries(nodeRequest.headers)) {
     if (Array.isArray(value)) {
@@ -76,6 +97,7 @@ function createNodeRequest(nodeRequest: IncomingMessage, port: number): Request 
   const requestInit: RequestInit & { duplex?: 'half' } = {
     headers,
     method: nodeRequest.method,
+    signal: abortController.signal,
   }
 
   if (methodHasRequestBody(nodeRequest.method)) {
@@ -106,7 +128,9 @@ function startBunStudioServer({ handler, onListen, port }: StartStudioServerOpti
   const bun = (
     globalThis as typeof globalThis & {
       Bun?: {
-        serve(options: { fetch: StudioRequestHandler; port: number }): { stop(closeActiveConnections?: boolean): void }
+        serve(options: { fetch: StudioRequestHandler; hostname: string; port: number }): {
+          stop(closeActiveConnections?: boolean): void
+        }
       }
     }
   ).Bun
@@ -117,6 +141,7 @@ function startBunStudioServer({ handler, onListen, port }: StartStudioServerOpti
 
   const server = bun.serve({
     fetch: handler,
+    hostname: STUDIO_SERVER_HOST,
     port,
   })
 
@@ -135,7 +160,7 @@ function startDenoStudioServer({ handler, onListen, port }: StartStudioServerOpt
     globalThis as typeof globalThis & {
       Deno?: {
         serve(
-          options: { port: number; signal: AbortSignal },
+          options: { hostname: string; port: number; signal: AbortSignal },
           handler: StudioRequestHandler,
         ): { shutdown?(): Promise<void> }
       }
@@ -146,7 +171,7 @@ function startDenoStudioServer({ handler, onListen, port }: StartStudioServerOpt
     throw new Error('Deno runtime is not available.')
   }
 
-  deno.serve({ port, signal: abortController.signal }, handler)
+  deno.serve({ hostname: STUDIO_SERVER_HOST, port, signal: abortController.signal }, handler)
   onListen()
 
   return {

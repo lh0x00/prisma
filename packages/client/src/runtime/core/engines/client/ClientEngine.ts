@@ -43,7 +43,7 @@ import { wasmQueryCompilerLoader } from './WasmQueryCompilerLoader'
 
 /**
  * Prisma error code for the `PrismaClientInitializationError` raised when
- * the `client` engine is instantiated without an active driver adapter.
+ * `PrismaClient` is instantiated without a driver adapter.
  */
 const CLIENT_ENGINE_ERROR = 'P2038'
 
@@ -127,7 +127,7 @@ export class ClientEngine implements Engine {
       debug('Using driver adapter: %O', config.adapter)
     } else {
       throw new PrismaClientInitializationError(
-        'Missing configured driver adapter. Engine type `client` requires an active driver adapter. Please check your PrismaClient initialization code.',
+        'PrismaClient requires a driver adapter to connect to your database, but none was provided. Pass one to the PrismaClient constructor, e.g. `new PrismaClient({ adapter })`. Learn more: https://pris.ly/d/driver-adapters',
         config.clientVersion,
         CLIENT_ENGINE_ERROR,
       )
@@ -477,6 +477,7 @@ export class ClientEngine implements Engine {
 
     let plan: QueryPlanNode
     let placeholderValues: Record<string, unknown> = {}
+    let queryInfoQuery = query.query
 
     if (isRawQuery(query)) {
       plan = compileRawQuery(query)
@@ -484,6 +485,7 @@ export class ClientEngine implements Engine {
       const { parameterizedQuery, placeholderValues: extractedValues } = parameterizeQuery(query, this.#paramGraph)
       const cacheKey = JSON.stringify(parameterizedQuery)
       placeholderValues = extractedValues
+      queryInfoQuery = parameterizedQuery.query
 
       // We do not cache `createMany` and `createManyAndReturn` queries as they are very unlikely
       // to benefit from caching due to their high variability in parameters, which leads to a very
@@ -517,7 +519,7 @@ export class ClientEngine implements Engine {
           type: 'single',
           modelName: query.modelName,
           action: query.action,
-          query: query.query,
+          query: queryInfoQuery,
         },
       })
 
@@ -550,6 +552,7 @@ export class ClientEngine implements Engine {
     const hasRawQueries = firstModelName === undefined
     let batchResponse: BatchResponse
     let placeholderValues: Record<string, unknown> = {}
+    let queryInfoQueries = queries.map((query) => query.query)
 
     if (!hasRawQueries) {
       const { parameterizedBatch, placeholderValues: extractedValues } = parameterizeBatch(
@@ -558,6 +561,7 @@ export class ClientEngine implements Engine {
       )
       const cacheKeyStr = JSON.stringify(parameterizedBatch)
       placeholderValues = extractedValues
+      queryInfoQueries = parameterizedBatch.batch.map((query) => query.query)
 
       const cached = this.#queryPlanCache?.getBatch(cacheKeyStr)
       if (cached) {
@@ -597,6 +601,7 @@ export class ClientEngine implements Engine {
 
           const results: BatchQueryEngineResult<unknown>[] = []
           let rollback = false
+          let canContinueOnError: boolean | undefined
           for (const [batchIndex, plan] of batchResponse.plans.entries()) {
             try {
               const rows = await executor.execute({
@@ -609,14 +614,22 @@ export class ClientEngine implements Engine {
                 customFetch: customDataProxyFetch?.(globalThis.fetch) as typeof globalThis.fetch | undefined,
                 queryInfo: {
                   type: 'single',
-                  ...queries[batchIndex],
+                  modelName: queries[batchIndex].modelName,
+                  action: queries[batchIndex].action,
+                  query: queryInfoQueries[batchIndex],
                 },
               })
               results.push({ data: { [queries[batchIndex].action]: rows } })
             } catch (err) {
+              canContinueOnError ??=
+                transaction?.kind !== 'batch' &&
+                queries.every((query) => query.action === 'findUnique' || query.action === 'findUniqueOrThrow')
+
               results.push(err as Error)
               rollback = true
-              break
+              if (!canContinueOnError) {
+                break
+              }
             }
           }
 
@@ -658,7 +671,7 @@ export class ClientEngine implements Engine {
               type: 'compacted',
               action: firstAction,
               modelName: firstModelName,
-              queries,
+              queries: queryInfoQueries,
             },
           })
 
