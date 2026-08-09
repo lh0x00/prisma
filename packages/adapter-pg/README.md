@@ -4,6 +4,8 @@ Fork of [`@prisma/adapter-pg`](https://github.com/prisma/prisma) with **PostGIS 
 
 Driver adapter for Prisma ORM that enables usage of the [`node-postgres`](https://node-postgres.com/) (`pg`) database driver for PostgreSQL — same as upstream, plus automatic detection of PostGIS `geometry` / `geography` column OIDs so they are returned as typed GeoJSON objects instead of raw bytes.
 
+[Why this fork exists](https://lh0x00.dev/p/vertexa-prisma-postgis-fork)
+
 ## Install
 
 ```bash

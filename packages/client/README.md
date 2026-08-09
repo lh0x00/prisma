@@ -4,6 +4,8 @@ Fork of [Prisma Client](https://github.com/prisma/prisma) with **PostGIS / Geome
 
 Auto-generated, type-safe query builder for Node.js and TypeScript — same as upstream `@prisma/client`, plus native PostGIS geometry types and spatial query filters.
 
+[Why this fork exists](https://lh0x00.dev/p/vertexa-prisma-postgis-fork)
+
 ## Install
 
 ```bash

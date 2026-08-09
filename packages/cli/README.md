@@ -8,6 +8,8 @@ This is a rebranded fork of Prisma ORM v7.8, published under the `@vertexa` npm 
 
 Everything else works the same as upstream Prisma. If you know Prisma, you know this fork.
 
+[Why this fork exists](https://lh0x00.dev/p/vertexa-prisma-postgis-fork)
+
 ## Install
 
 ```bash
